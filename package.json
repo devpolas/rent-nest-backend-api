@@ -1,0 +1,16 @@
+{
+  "name": "rent-nest-backend-api",
+  "version": "0.1.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Polas Chandra Barmon",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}
