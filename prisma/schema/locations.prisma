@@ -1,0 +1,30 @@
+model Location {
+  id String @id @default(uuid())
+
+  latitude  Decimal? @db.Decimal(10,8)
+  longitude Decimal? @db.Decimal(11,8)
+
+  type LocationType
+  country    String
+  division   String
+  district   String
+  city       String
+  village    String
+  postalCode String
+
+  addressLine String? @db.Text
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([country])
+  @@index([division])
+  @@index([district])
+  @@index([city])
+  @@index([postalCode])
+
+  @@map("locations")
+}

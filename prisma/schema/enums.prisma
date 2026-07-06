@@ -1,0 +1,19 @@
+enum UserStatus {
+  ACTIVE
+  DEACTIVATE
+  BLOCKED
+  BANNED
+}
+
+enum UserRole {
+  TENANT
+  LANDLORD
+  MODERATOR
+  ADMIN
+}
+
+enum LocationType {
+  HOME
+  CURRENT
+  WORK
+}
