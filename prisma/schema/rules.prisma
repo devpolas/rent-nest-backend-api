@@ -1,17 +1,15 @@
-model PropertyType {
+model Rule {
   id String @id @default(uuid())
 
   name String @unique @db.VarChar(100)
   slug String @unique @db.VarChar(120)
   icon String? @db.Text
 
-  properties Property[]
+  propertyRules PropertyRules[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name])
-  @@index([slug])
-  
-  @@map("property_types")
+  @@map("rules")
 }

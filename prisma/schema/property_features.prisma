@@ -1,0 +1,18 @@
+model PropertyFeatures {
+  id String @id @default(uuid())
+
+  propertyId String
+  featureId String
+
+  property Property @relation(fields: [propertyId], references: [id])
+  feature Feature @relation(fields: [featureId],references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, featureId])
+  @@index([propertyId])
+  @@index([featureId])
+
+  @@map("property_features")
+}

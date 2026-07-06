@@ -17,6 +17,8 @@ model Location {
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
+  property Property?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -25,6 +27,7 @@ model Location {
   @@index([district])
   @@index([city])
   @@index([postalCode])
+  @@index([profileId])
 
   @@map("locations")
 }

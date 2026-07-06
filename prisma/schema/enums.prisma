@@ -18,3 +18,35 @@ enum LocationType {
   WORK
   PROPERTY
 }
+
+enum PropertyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RENTED
+  ARCHIVED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  RESERVED
+  RENTED
+  UNAVAILABLE
+}
+
+enum RentalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAYMENT_PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}

@@ -1,18 +1,19 @@
-model PropertyAmenities {
+model PropertyRules {
   id String @id @default(uuid())
 
   propertyId String
-  amenityId String
+  ruleId String
 
   property Property @relation(fields: [propertyId], references: [id])
-  amenity Amenity @relation(fields: [amenityId], references: [id])
+  rule Rule @relation(fields: [ruleId],references: [id])
+
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([propertyId, amenityId])
+  @@unique([propertyId, ruleId])
   @@index([propertyId])
-  @@index([amenityId])
+  @@index([ruleId])
 
-  @@map("property_amenities")
+  @@map("property_rules")
 }

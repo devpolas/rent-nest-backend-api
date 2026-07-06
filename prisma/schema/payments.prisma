@@ -1,0 +1,26 @@
+model Payment {
+  id String @id @default(uuid())
+
+  amount Decimal @db.Decimal(10,2)
+  currency String @db.VarChar(20)
+
+  provider String @db.VarChar(20)
+
+  paymentIntentId String
+  transactionId String
+
+  status PaymentStatus @default(PENDING)
+
+  paidAt DateTime
+
+  tenantId String
+  tenant User @relation(fields: [tenantId],references: [id],onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paidAt])
+  @@index([tenantId])
+
+  @@map("payments")
+}

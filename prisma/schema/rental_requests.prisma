@@ -1,0 +1,26 @@
+model RentalRequests{
+  id String @id @default(uuid())
+
+  tenantId String
+  propertyId String @unique
+  landlordId String
+
+  message String @db.Text
+
+  moveInDate DateTime
+  leaseMonths Int
+
+  property Property @relation(fields: [propertyId],references: [id],onDelete: Cascade)
+  tenant User @relation(fields: [tenantId],references: [id],onDelete: Cascade)
+
+  status RentalRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId,tenantId])
+  @@index([tenantId])
+  @@index([propertyId])
+
+  @@map("rental_requests")
+}

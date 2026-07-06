@@ -10,9 +10,17 @@ model User {
   status  UserStatus @default(ACTIVE)
 
   profile Profile?
+  property Property[]
+  payments Payment[]
+  rentalRequest RentalRequests[]
+  reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([ email])
+  @@index([ phone])
 
   @@map("users")
 }

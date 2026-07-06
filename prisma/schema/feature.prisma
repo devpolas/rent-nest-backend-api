@@ -1,17 +1,14 @@
-model PropertyType {
+model Feature {
   id String @id @default(uuid())
 
   name String @unique @db.VarChar(100)
   slug String @unique @db.VarChar(120)
   icon String? @db.Text
 
-  properties Property[]
+  propertyFeatures PropertyFeatures[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name])
-  @@index([slug])
-  
-  @@map("property_types")
+  @@map("features")
 }
