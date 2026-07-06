@@ -16,4 +16,5 @@ enum LocationType {
   HOME
   CURRENT
   WORK
+  PROPERTY
 }
