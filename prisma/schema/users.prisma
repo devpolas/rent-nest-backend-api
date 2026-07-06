@@ -3,8 +3,8 @@ model User {
   name String @db.VarChar(255)
   email String  @db.VarChar(255)
   password String @db.VarChar(32)
-  phone String @db.VarChar(20)
-  avatar String @db.Text
+  phone String? @db.VarChar(20)
+  avatar String? @db.Text
   emailVerified Boolean @default(false)
   role UserRole @default(TENANT)
   status  UserStatus @default(ACTIVE)
