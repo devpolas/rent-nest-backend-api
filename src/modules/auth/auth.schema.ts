@@ -32,3 +32,6 @@ export const SigninSchema = z.object({
     .min(8, "password at least 8 characters")
     .max(32, "password should be 32 characters or less"),
 });
+
+export type SignupPayload = z.input<typeof SignupSchema>;
+export type SigninPayload = z.input<typeof SigninSchema>;

@@ -1,5 +1,12 @@
 import type { Response } from "express";
+import config from "../config";
+import type { Milliseconds } from "./timeHelper";
 
+interface CookieResponse {
+  cookieKey: string;
+  keyValue: string;
+  maxAge: Milliseconds;
+}
 interface Meta {
   page: number;
   limit: number;
@@ -27,5 +34,19 @@ export const sendResponse = <T>(
     timestamp: new Date().toISOString(),
     ...(data !== undefined && { data }),
     ...(meta && { meta }),
+  });
+};
+
+export const sendResponseToCookies = (
+  res: Response,
+  response: CookieResponse,
+) => {
+  const { cookieKey, keyValue, maxAge } = response;
+
+  res.cookie(cookieKey, keyValue, {
+    httpOnly: true,
+    secure: config.node_env === "production",
+    sameSite: "none",
+    maxAge,
   });
 };

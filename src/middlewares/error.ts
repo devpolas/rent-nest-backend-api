@@ -6,10 +6,12 @@ export default function globalErrorController(
   res: Response,
   next: NextFunction,
 ) {
-  res.status(err.statusCode).json({
-    status: err.status,
+  const statusCode = err.statusCode ?? 500;
+
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "Something went wrong",
     error: err,
-    message: err.message,
-    stack: err.stack,
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 }
