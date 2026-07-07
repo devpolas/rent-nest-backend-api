@@ -3,8 +3,8 @@ import bcrypt from "bcrypt";
 import { AppError } from "../../utils/appError";
 import type { SigninPayload, SignupPayload } from "./auth.schema";
 import prisma from "../../lib/prisma";
-import config from "../../config";
-import { createJWT } from "../../utils/jwt";
+import { createJWT, verifyToken } from "../../utils/jwt";
+import type { JwtPayload } from "jsonwebtoken";
 
 //signup
 export const createUser = async (payload: SignupPayload) => {
@@ -75,10 +75,49 @@ export const checkUserCredentials = async (payload: SigninPayload) => {
     name: user.name,
     email: user.email,
     role: user.role,
-  };
+  } as JwtPayload;
 
   const accessToken = createJWT(jwtPayload, "accessToken");
   const refreshToken = createJWT(jwtPayload, "refreshToken");
 
   return { accessToken, refreshToken };
+};
+
+export const createAccessToken = async (token: string) => {
+  if (!token) {
+    throw new AppError("login first", httpStatus.UNAUTHORIZED);
+  }
+  const decode = verifyToken(token, "refreshToken");
+  const { id, name, email, role } = decode as JwtPayload;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+      name,
+      email,
+      role,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("create account first", httpStatus.UNAUTHORIZED);
+  }
+
+  if (user.status === "BLOCKED") {
+    throw new Error("Your account has been blocked. Please contact support.");
+  }
+  if (user.status === "BANNED") {
+    throw new Error("Your account has been banned. Please contact support.");
+  }
+
+  const jwtPayload = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  } as JwtPayload;
+
+  const accessToken = createJWT(jwtPayload, "accessToken");
+
+  return accessToken;
 };

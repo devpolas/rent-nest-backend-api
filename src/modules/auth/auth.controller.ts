@@ -1,7 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { SigninSchema, SignupSchema } from "./auth.schema";
-import { createUser, checkUserCredentials } from "./auth.service";
+import {
+  createUser,
+  checkUserCredentials,
+  createAccessToken,
+} from "./auth.service";
 import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
 import { Time } from "../../utils/timeHelper";
 import httpStatus from "http-status";
@@ -39,6 +43,29 @@ export const signin = catchAsync(
       cookieKey: "refreshToken",
       keyValue: refreshToken,
       maxAge: Time.day(30),
+    });
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "user login successfully",
+      data: {
+        accessToken,
+      },
+    });
+  },
+);
+
+export const refreshToken = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    const accessToken = await createAccessToken(refreshToken);
+
+    sendResponseToCookies(res, {
+      cookieKey: "accessToken",
+      keyValue: accessToken,
+      maxAge: Time.day(1),
     });
 
     sendResponse(res, {
