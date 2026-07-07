@@ -57,6 +57,7 @@ export const checkUserCredentials = async (payload: SigninPayload) => {
       httpStatus.FORBIDDEN,
     );
   }
+
   if (user.status === "BANNED") {
     throw new AppError(
       "Your account has been banned. Please contact support.",

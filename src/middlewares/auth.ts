@@ -55,6 +55,7 @@ export const protect = catchAsync(
     if (user.status === "BLOCKED") {
       throw new Error("Your account has been blocked. Please contact support.");
     }
+
     if (user.status === "BANNED") {
       throw new Error("Your account has been banned. Please contact support.");
     }
