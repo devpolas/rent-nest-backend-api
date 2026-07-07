@@ -1,8 +1,8 @@
 model Location {
   id String @id @default(uuid())
 
-  latitude  Decimal? @db.Decimal(10,8)
-  longitude Decimal? @db.Decimal(11,8)
+  latitude  String?  @db.Text
+  longitude String? @db.Text
 
   type LocationType
   country    String
@@ -28,6 +28,8 @@ model Location {
   @@index([city])
   @@index([postalCode])
   @@index([profileId])
+
+  @@unique([type, profileId])
 
   @@map("locations")
 }

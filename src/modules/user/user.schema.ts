@@ -9,7 +9,7 @@ export const UserSchema = z.object({
 export const UserProfileSchema = z.object({
   profileImage: z.url().optional(),
   bio: z.string().optional(),
-  birthdate: z.coerce.date().optional(),
+  birthdate: z.date().optional(),
 });
 
 export const SocialPlatformEnum = z.enum([
@@ -31,8 +31,8 @@ export const SocialProfileSchema = z.object({
 });
 
 export const LocationSchema = z.object({
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
+  latitude: z.string().optional(),
+  longitude: z.string().optional(),
 
   type: z.enum(["HOME", "CURRENT", "WORK"]),
 
@@ -52,3 +52,5 @@ export const CompleteUserSchema = UserSchema.extend({
     socialProfiles: z.array(SocialProfileSchema).optional(),
   }),
 });
+
+export type UserInputType = z.input<typeof CompleteUserSchema>;

@@ -25,6 +25,9 @@ export const createUser = async (payload: SignupPayload) => {
       name,
       email,
       password: hashPassword,
+      profile: {
+        create: {},
+      },
     },
   });
 
