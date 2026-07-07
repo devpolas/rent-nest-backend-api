@@ -12,6 +12,19 @@ enum UserRole {
   ADMIN
 }
 
+enum SocialPlatform {
+  GITHUB
+  LINKEDIN
+  FACEBOOK
+  TWITTER
+  INSTAGRAM
+  YOUTUBE
+  DISCORD
+  TELEGRAM
+  WHATSAPP
+  WEBSITE
+}
+
 enum LocationType {
   HOME
   CURRENT

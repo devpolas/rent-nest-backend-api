@@ -66,6 +66,7 @@ export const protect = catchAsync(
       email: user.email,
       role: user.role,
     };
+    next();
   },
 );
 
