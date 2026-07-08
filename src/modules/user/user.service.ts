@@ -158,10 +158,7 @@ export const updateUserIntoDB = async (
         };
         await tx.location.upsert({
           where: {
-            type_profileId: {
-              type: location.type,
-              profileId: user.profile.id,
-            },
+            id,
           },
 
           update: locationData,
