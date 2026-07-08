@@ -4,8 +4,8 @@ model PropertyRules {
   propertyId String
   ruleId String
 
-  property Property @relation(fields: [propertyId], references: [id])
-  rule Rule @relation(fields: [ruleId],references: [id])
+  property Property @relation(fields: [propertyId], references: [id],onDelete: Cascade)
+  rule Rule @relation(fields: [ruleId],references: [id],onDelete: Cascade)
 
   
   createdAt DateTime @default(now())

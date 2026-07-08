@@ -28,8 +28,8 @@ model Property {
 
   amenities PropertyAmenities[]
   features PropertyFeatures[]
-  propertyImages PropertyImage[]
-  propertyRules PropertyRules[]
+  images PropertyImage[]
+  rules PropertyRules[]
   reviews Review[]
   rentalRequest RentalRequests?
 

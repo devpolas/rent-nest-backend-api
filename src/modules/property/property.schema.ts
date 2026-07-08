@@ -8,18 +8,18 @@ export const PropertySchema = z.object({
   bedrooms: z.number().int().positive(),
   bathrooms: z.number().int().positive(),
   area: z.number().positive(),
-  availableFrom: z.date(),
+  availableFrom: z.coerce.date(),
   availability: z
     .enum(["AVAILABLE", "RESERVED", "RENTED", "UNAVAILABLE"])
     .default("AVAILABLE"),
   status: z
     .enum(["PENDING", "APPROVED", "REJECTED", "RENTED", "ARCHIVED"])
     .default("PENDING"),
-  propertyImages: z.array(z.url()),
-  propertyTypeId: z.uuid(),
+  images: z.array(z.url()),
+  categoryId: z.uuid(),
   amenities: z.array(z.uuid()),
   features: z.array(z.uuid()),
-  propertyRules: z.array(z.uuid()),
+  rules: z.array(z.uuid()),
 });
 
 export const LocationSchema = z.object({
@@ -32,12 +32,11 @@ export const LocationSchema = z.object({
   city: z.string().min(1),
   village: z.string().min(1),
   postalCode: z.string().min(1),
-
   addressLine: z.string().optional(),
 });
 
 export const CompletePropertySchema = PropertySchema.extend({
-  ...LocationSchema.shape,
+  location: LocationSchema,
 });
 
-export type PropertyInputType = z.input<typeof CompletePropertySchema>;
+export type PropertyInputType = z.infer<typeof CompletePropertySchema>;

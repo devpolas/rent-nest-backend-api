@@ -4,8 +4,8 @@ model PropertyAmenities {
   propertyId String
   amenityId String
 
-  property Property @relation(fields: [propertyId], references: [id])
-  amenity Amenity @relation(fields: [amenityId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id],onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id],onDelete: Cascade)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

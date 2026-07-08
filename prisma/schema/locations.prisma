@@ -29,7 +29,5 @@ model Location {
   @@index([postalCode])
   @@index([profileId])
 
-  @@unique([type, profileId])
-
   @@map("locations")
 }

@@ -4,8 +4,8 @@ model PropertyFeatures {
   propertyId String
   featureId String
 
-  property Property @relation(fields: [propertyId], references: [id])
-  feature Feature @relation(fields: [featureId],references: [id])
+  property Property @relation(fields: [propertyId], references: [id],onDelete: Cascade)
+  feature Feature @relation(fields: [featureId],references: [id],onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
