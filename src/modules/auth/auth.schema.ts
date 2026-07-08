@@ -15,8 +15,8 @@ export const SignupSchema = z
       .max(32, "password should be 32 characters or less"),
     confirmPassword: z.string(),
     role: z.enum(
-      ["TENANT", "LANDLORD"],
-      "role should be 'TENANT' or 'LANDLORD'",
+      ["TENANT", "LANDLORD", "MODERATOR"],
+      "role should be 'TENANT', 'LANDLORD' or 'MODERATOR",
     ),
   })
   .refine((val) => val.password === val.confirmPassword, {
