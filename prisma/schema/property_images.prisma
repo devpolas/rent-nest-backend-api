@@ -2,7 +2,6 @@ model PropertyImage {
   id String @id @default(uuid())
 
   propertyId String
-  publicId String
 
   url String @db.Text
   isThumbnail Boolean @default(false)
