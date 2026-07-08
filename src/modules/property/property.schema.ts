@@ -35,8 +35,49 @@ export const LocationSchema = z.object({
   addressLine: z.string().optional(),
 });
 
+export const PropertyUpdateSchema = z.object({
+  title: z.string().min(10).optional(),
+  description: z.string().min(15).optional(),
+  rent: z.number().positive().optional(),
+  securityDeposit: z.number().nonnegative().optional(),
+  bedrooms: z.number().int().positive().optional(),
+  bathrooms: z.number().int().positive().optional(),
+  area: z.number().positive().optional(),
+  availableFrom: z.coerce.date().optional(),
+  availability: z
+    .enum(["AVAILABLE", "RESERVED", "RENTED", "UNAVAILABLE"])
+    .optional(),
+  status: z
+    .enum(["PENDING", "APPROVED", "REJECTED", "RENTED", "ARCHIVED"])
+    .optional(),
+  images: z.array(z.url()).optional(),
+  categoryId: z.uuid().optional(),
+  amenities: z.array(z.uuid()).optional(),
+  features: z.array(z.uuid()).optional(),
+  rules: z.array(z.uuid()).optional(),
+});
+
+export const LocationUpdateSchema = z.object({
+  latitude: z.string().optional(),
+  longitude: z.string().optional(),
+  country: z.string().min(1).optional(),
+  division: z.string().min(1).optional(),
+  district: z.string().min(1).optional(),
+  city: z.string().min(1).optional(),
+  village: z.string().min(1).optional(),
+  postalCode: z.string().min(1).optional(),
+  addressLine: z.string().optional().optional(),
+});
+
 export const CompletePropertySchema = PropertySchema.extend({
   location: LocationSchema,
 });
 
+export const CompleteUpdatePropertySchema = PropertyUpdateSchema.extend({
+  location: LocationUpdateSchema.optional(),
+});
+
 export type PropertyInputType = z.infer<typeof CompletePropertySchema>;
+export type PropertyUpdateInputType = z.infer<
+  typeof CompleteUpdatePropertySchema
+>;

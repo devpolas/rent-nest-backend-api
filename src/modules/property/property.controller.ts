@@ -2,11 +2,20 @@ import type { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
-import { createPropertyIntoDB } from "./property.service";
-import { CompletePropertySchema } from "./property.schema";
+import {
+  createPropertyIntoDB,
+  deletePropertyFromDB,
+  getPropertyByIdFromDB,
+  getAllPropertyFromDB,
+  updatePropertyIntoDB,
+} from "./property.service";
+import {
+  CompletePropertySchema,
+  CompleteUpdatePropertySchema,
+} from "./property.schema";
 import { sendResponse } from "../../utils/sendResponse";
 
-export const createCategory = catchAsync(
+export const createProperty = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
@@ -23,6 +32,71 @@ export const createCategory = catchAsync(
       data: {
         property,
       },
+    });
+  },
+);
+
+export const getAllProperties = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const properties = await getAllPropertyFromDB();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Properties retrieved successfully",
+      data: {
+        properties,
+      },
+    });
+  },
+);
+
+export const getPropertyById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id as string;
+
+    const property = await getPropertyByIdFromDB(id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Property retrieved successfully",
+      data: {
+        property,
+      },
+    });
+  },
+);
+
+export const updatePropertyById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id as string;
+
+    const body = CompleteUpdatePropertySchema.parse(req.body);
+
+    const updatedProperty = updatePropertyIntoDB(id, body);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Property updated successfully",
+      data: {
+        user: updatedProperty,
+      },
+    });
+  },
+);
+
+export const deletePropertyById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id as string;
+
+    await deletePropertyFromDB(id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.NO_CONTENT,
+      message: "Property deleted successfully",
     });
   },
 );
