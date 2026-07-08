@@ -22,6 +22,10 @@ export const PropertySchema = z.object({
   rules: z.array(z.uuid()),
 });
 
+export const AdminSchema = z.object({
+  landlordId: z.uuid(),
+});
+
 export const LocationSchema = z.object({
   latitude: z.string().optional(),
   longitude: z.string().optional(),
@@ -69,15 +73,28 @@ export const LocationUpdateSchema = z.object({
   addressLine: z.string().optional().optional(),
 });
 
+export const AdminUpdateSchema = z.object({
+  landlordId: z.uuid().optional(),
+});
+
 export const CompletePropertySchema = PropertySchema.extend({
   location: LocationSchema,
+});
+
+export const PropertyAdminSchema = CompletePropertySchema.extend({
+  ...AdminSchema.shape,
 });
 
 export const CompleteUpdatePropertySchema = PropertyUpdateSchema.extend({
   location: LocationUpdateSchema.optional(),
 });
+export const CompleteUpdateAdminPropertySchema = PropertyUpdateSchema.extend({
+  location: LocationUpdateSchema.optional(),
+  ...AdminUpdateSchema.shape,
+});
 
-export type PropertyInputType = z.infer<typeof CompletePropertySchema>;
+export type PropertyInputType = z.infer<typeof PropertyAdminSchema>;
+
 export type PropertyUpdateInputType = z.infer<
-  typeof CompleteUpdatePropertySchema
+  typeof CompleteUpdateAdminPropertySchema
 >;

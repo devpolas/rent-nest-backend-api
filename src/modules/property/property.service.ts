@@ -7,11 +7,9 @@ import type {
 import slugify from "slugify";
 import httpStatus from "http-status";
 
-export const createPropertyIntoDB = async (
-  landlordId: string,
-  property: PropertyInputType,
-) => {
+export const createPropertyIntoDB = async (property: PropertyInputType) => {
   const {
+    landlordId,
     title,
     description,
     rent,
@@ -317,6 +315,14 @@ export const updatePropertyIntoDB = async (
       data: {
         ...propertyPayload,
 
+        ...(property.landlordId && {
+          landlord: {
+            connect: {
+              id: property.landlordId,
+            },
+          },
+        }),
+
         ...(property.categoryId && {
           category: {
             connect: {
@@ -436,9 +442,44 @@ export const updatePropertyIntoDB = async (
   return updatedProperty;
 };
 
-export const getAllPropertyFromDB = async () => {
+export const getAllPropertiesFromDB = async () => {
   const properties = await prisma.property.findMany({
     where: {},
+    include: {
+      images: true,
+      location: true,
+      landlord: {
+        include: {
+          profile: true,
+        },
+        omit: { password: true },
+      },
+
+      category: true,
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+      features: {
+        include: {
+          feature: true,
+        },
+      },
+      rules: {
+        include: {
+          rule: true,
+        },
+      },
+    },
+  });
+
+  return properties;
+};
+
+export const getAllMyPropertiesFromDB = async (userId: string) => {
+  const properties = await prisma.property.findMany({
+    where: { landlordId: userId },
     include: {
       images: true,
       location: true,

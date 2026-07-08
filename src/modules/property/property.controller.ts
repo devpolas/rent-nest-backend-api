@@ -6,12 +6,15 @@ import {
   createPropertyIntoDB,
   deletePropertyFromDB,
   getPropertyByIdFromDB,
-  getAllPropertyFromDB,
+  getAllPropertiesFromDB,
   updatePropertyIntoDB,
+  getAllMyPropertiesFromDB,
 } from "./property.service";
 import {
   CompletePropertySchema,
+  CompleteUpdateAdminPropertySchema,
   CompleteUpdatePropertySchema,
+  PropertyAdminSchema,
 } from "./property.schema";
 import { sendResponse } from "../../utils/sendResponse";
 
@@ -23,7 +26,31 @@ export const createProperty = catchAsync(
 
     const body = CompletePropertySchema.parse(req.body);
 
-    const property = await createPropertyIntoDB(req.user.id, body);
+    const property = await createPropertyIntoDB({
+      ...body,
+      landlordId: req.user.id,
+    });
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Property created successfully",
+      data: {
+        property,
+      },
+    });
+  },
+);
+
+export const createPropertyByAdmin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    }
+
+    const body = PropertyAdminSchema.parse(req.body);
+
+    const property = await createPropertyIntoDB(body);
 
     sendResponse(res, {
       success: true,
@@ -38,7 +65,26 @@ export const createProperty = catchAsync(
 
 export const getAllProperties = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const properties = await getAllPropertyFromDB();
+    const properties = await getAllPropertiesFromDB();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Properties retrieved successfully",
+      data: {
+        properties,
+      },
+    });
+  },
+);
+
+export const getAllMyProperties = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    }
+
+    const properties = await getAllMyPropertiesFromDB(req.user.id);
 
     sendResponse(res, {
       success: true,
@@ -68,6 +114,24 @@ export const getPropertyById = catchAsync(
   },
 );
 
+export const updatePropertyByIdByAdmin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id as string;
+
+    const body = CompleteUpdateAdminPropertySchema.parse(req.body);
+
+    const updatedProperty = updatePropertyIntoDB(id, body);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Property updated successfully",
+      data: {
+        user: updatedProperty,
+      },
+    });
+  },
+);
 export const updatePropertyById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id as string;

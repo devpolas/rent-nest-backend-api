@@ -2,23 +2,41 @@ import { Router } from "express";
 import { protect, restrictTo } from "../../middlewares/auth";
 import {
   createProperty,
+  createPropertyByAdmin,
   deletePropertyById,
+  getAllMyProperties,
   getAllProperties,
   getPropertyById,
   updatePropertyById,
+  updatePropertyByIdByAdmin,
 } from "./property.controller";
 
 const router = Router();
 
+// public route
 router.route("/properties").get(getAllProperties);
 router.route("/properties/:id").get(getPropertyById);
 
+// protected routes
 router.use(protect);
-router.use(restrictTo("ADMIN", "LANDLORD"));
-router.route("/landlord/properties").post(createProperty);
+
+// own property route
+router.use(restrictTo("LANDLORD"));
+router
+  .route("/landlord/properties")
+  .post(createProperty)
+  .get(getAllMyProperties);
 router
   .route("/landlord/properties/:id")
   .patch(updatePropertyById)
+  .delete(deletePropertyById);
+
+// admin route
+router.use(restrictTo("ADMIN"));
+router.route("/properties").post(createPropertyByAdmin);
+router
+  .route("properties/:id")
+  .patch(updatePropertyByIdByAdmin)
   .delete(deletePropertyById);
 
 export const propertyRouter = router;
