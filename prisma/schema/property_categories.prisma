@@ -1,5 +1,6 @@
-model PropertyType {
+model PropertyCategory {
   id String @id @default(uuid())
+  categoryNo Int @default(autoincrement())
 
   name String @unique @db.VarChar(100)
   slug String @unique @db.VarChar(120)
@@ -10,8 +11,9 @@ model PropertyType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([categoryNo])
   @@index([name])
   @@index([slug])
   
-  @@map("property_types")
+  @@map("property_categories")
 }

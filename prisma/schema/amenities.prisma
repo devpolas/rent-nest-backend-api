@@ -1,5 +1,6 @@
 model Amenity {
   id String @id @default(uuid())
+  amenityNo Int @default(autoincrement())
 
   name String @unique @db.VarChar(100)
   slug String @unique @db.VarChar(120)
@@ -9,6 +10,10 @@ model Amenity {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([amenityNo])
+  @@index([slug])
+  @@index([name])
 
   @@map("amenities")
 }

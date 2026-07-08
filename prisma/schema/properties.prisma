@@ -23,8 +23,8 @@ model Property {
   landlordId String
   landlord User @relation(fields: [landlordId],references: [id], onDelete: Cascade)
 
-  propertyTypeId String
-  propertyType PropertyType @relation(fields: [propertyTypeId],references: [id], onDelete: Cascade)
+  categoryId String
+  category PropertyCategory @relation(fields: [categoryId],references: [id], onDelete: Cascade)
 
   amenities PropertyAmenities[]
   features PropertyFeatures[]
@@ -38,7 +38,7 @@ model Property {
 
 
   @@index([landlordId])
-  @@index([propertyTypeId])
+  @@index([categoryId])
   @@index([status])
   @@index([availability])
   @@index([rent])

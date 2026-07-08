@@ -1,5 +1,6 @@
 model Feature {
   id String @id @default(uuid())
+  featureNo Int @default(autoincrement())
 
   name String @unique @db.VarChar(100)
   slug String @unique @db.VarChar(120)
@@ -9,6 +10,10 @@ model Feature {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([featureNo])
+  @@index([slug])
+  @@index([name])
 
   @@map("features")
 }
