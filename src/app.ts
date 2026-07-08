@@ -6,6 +6,10 @@ import globalErrorController from "./middlewares/error";
 import config from "./config";
 import cookieParser from "cookie-parser";
 import { userRouter } from "./modules/user/user.routes";
+import { propertyRouter } from "./modules/property/property.route";
+import { rentalRouter } from "./modules/rental/rental.route";
+import { paymentRouter } from "./modules/payments/payment.route";
+import { reviewRouter } from "./modules/reviews/review.route";
 
 const app: Application = express();
 
@@ -23,6 +27,10 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1", propertyRouter);
+app.use("/api/v1/rentals", rentalRouter);
+app.use("/api/v1/reviews", reviewRouter);
+app.use("/api/v1/payments", paymentRouter);
 
 app.use(globalErrorController);
 
