@@ -1,12 +1,30 @@
 import { Router } from "express";
-import { getMe, updateUser } from "./user.controller";
-import { protect } from "../../middlewares/auth";
+import {
+  deleteMe,
+  deleteUserById,
+  getAllUsers,
+  getUserById,
+  updateProfile,
+  updateUserById,
+} from "./user.controller";
+import { protect, restrictTo } from "../../middlewares/auth";
 
 const router = Router();
 
 router.use(protect);
 
-router.get("/me", getMe);
-router.route("/:id").patch(updateUser);
+// User self routes
+router.route("/").patch(updateProfile).delete(deleteMe);
+
+// Admin routes
+router.use(restrictTo("ADMIN"));
+
+router.route("/").get(getAllUsers);
+
+router
+  .route("/:id")
+  .patch(updateUserById)
+  .delete(deleteUserById)
+  .get(getUserById);
 
 export const userRouter = router;

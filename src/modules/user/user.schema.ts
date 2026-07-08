@@ -4,6 +4,8 @@ export const UserSchema = z.object({
   name: z.string().optional(),
   phone: z.string().optional(),
   avatar: z.url().optional(),
+  role: z.enum(["TENANT", "LANDLORD", "MODERATOR", "ADMIN"]).optional(),
+  status: z.enum(["ACTIVE", "DEACTIVATE", "BLOCKED", "BANNED"]).optional(),
 });
 
 export const UserProfileSchema = z.object({
@@ -53,4 +55,15 @@ export const CompleteUserSchema = UserSchema.extend({
   }),
 });
 
+export const AdminFieldsSchema = z.object({
+  role: z.enum(["TENANT", "LANDLORD", "MODERATOR", "ADMIN"]).optional(),
+
+  status: z.enum(["ACTIVE", "DEACTIVATE", "BLOCKED", "BANNED"]).optional(),
+});
+
+export const AdminUserSchema = CompleteUserSchema.extend({
+  ...AdminFieldsSchema.shape,
+});
+
 export type UserInputType = z.input<typeof CompleteUserSchema>;
+export type AdminUserInputType = z.input<typeof AdminUserSchema>;

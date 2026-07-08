@@ -1,7 +1,7 @@
 import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
-import type { UserInputType } from "./user.schema";
+import type { AdminUserInputType } from "./user.schema";
 
 export const getProfileFromDB = async (id: string) => {
   const user = await prisma.user.findUnique({
@@ -27,9 +27,34 @@ export const getProfileFromDB = async (id: string) => {
 
   return user;
 };
+export const getAllUsersFromDB = async () => {
+  const user = await prisma.user.findMany({
+    where: {},
+    include: {
+      profile: {
+        include: {
+          location: true,
+          socialProfile: true,
+        },
+      },
+    },
+    omit: {
+      password: true,
+    },
+  });
 
-export const updateUserIntoDB = async (id: string, payload: UserInputType) => {
-  const { avatar, name, phone, profile } = payload;
+  if (!user) {
+    throw new AppError("user doesn't exits", httpStatus.NOT_FOUND);
+  }
+
+  return user;
+};
+
+export const updateUserIntoDB = async (
+  id: string,
+  payload: AdminUserInputType,
+) => {
+  const { avatar, name, status, role, phone, profile } = payload;
 
   const profileImage = profile?.profileImage;
   const bio = profile?.bio;
@@ -41,6 +66,8 @@ export const updateUserIntoDB = async (id: string, payload: UserInputType) => {
     ...(name !== undefined && { name }),
     ...(avatar !== undefined && { avatar }),
     ...(phone !== undefined && { phone }),
+    ...(role !== undefined && { role }),
+    ...(status !== undefined && { status }),
   };
 
   const profileData = {
@@ -161,4 +188,18 @@ export const updateUserIntoDB = async (id: string, payload: UserInputType) => {
   });
 
   return updatedUser;
+};
+
+export const deleteUserFromDB = async (id: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!user) {
+    throw new AppError("user doesn't exits", httpStatus.NOT_FOUND);
+  }
+
+  await prisma.user.delete({ where: { id } });
 };
