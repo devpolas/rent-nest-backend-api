@@ -8,7 +8,7 @@ model Payment {
   transactionId String @unique
 
   expireIn DateTime
-  status PaymentStatus @default(SUCCESS)
+  status PaymentStatus @default(PENDING)
 
 
   propertyId String
