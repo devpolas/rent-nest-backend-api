@@ -9,6 +9,7 @@ import {
 import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
 import { Time } from "../../utils/timeHelper";
 import httpStatus from "http-status";
+import { AppError } from "../../utils/appError";
 
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -60,6 +61,10 @@ export const refreshToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const refreshToken = req.cookies.refreshToken;
 
+    if (!refreshToken) {
+      throw new AppError("Refresh token not found", httpStatus.UNAUTHORIZED);
+    }
+
     const accessToken = await createAccessToken(refreshToken);
 
     sendResponseToCookies(res, {
@@ -71,7 +76,7 @@ export const refreshToken = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
-      message: "user login successfully",
+      message: "Access token generated successfully",
       data: {
         accessToken,
       },
