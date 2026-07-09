@@ -17,38 +17,41 @@ import {
 
 const router = Router();
 
-// protect
+// Protected routes
 router.use(protect);
 
-// tenant
-router.use(restrictTo("TENANT"));
-
-router.route("/rentals").post(createRentRequest).get(getAllRentRequestByTenant);
+// Tenant routes
+router
+  .route("/rentals")
+  .post(restrictTo("TENANT"), createRentRequest)
+  .get(restrictTo("TENANT"), getAllRentRequestByTenant);
 
 router
   .route("/rentals/:id")
-  .get(getRentRequestByTenantById)
-  .patch(updateRentRequestByTenantById)
-  .delete(deleteRentRequestByTenantById);
+  .get(restrictTo("TENANT"), getRentRequestByTenantById)
+  .patch(restrictTo("TENANT"), updateRentRequestByTenantById)
+  .delete(restrictTo("TENANT"), deleteRentRequestByTenantById);
 
-// landlord
-router.use(restrictTo("LANDLORD"));
-
-router.route("landlord/requests").get(getAllRentRequestByOwner);
+// Landlord routes
 router
-  .route("landlord/requests/:id")
-  .get(getRentRequestByOwnerById)
-  .patch(updateRentRequestByLandlordAndAdmin)
-  .delete(deleteRentRequestByOwnerById);
+  .route("/landlord/requests")
+  .get(restrictTo("LANDLORD"), getAllRentRequestByOwner);
 
-// admin
-router.use(restrictTo("ADMIN"));
-
-router.route("/rentals").get(getAllRentRequestByAdmin);
 router
-  .route("/rentals/:id")
-  .get(getRentRequestByAdminById)
-  .patch(updateRentRequestByLandlordAndAdmin)
-  .delete(deleteRentRequestByAdminById);
+  .route("/landlord/requests/:id")
+  .get(restrictTo("LANDLORD"), getRentRequestByOwnerById)
+  .patch(restrictTo("LANDLORD"), updateRentRequestByLandlordAndAdmin)
+  .delete(restrictTo("LANDLORD"), deleteRentRequestByOwnerById);
+
+// Admin routes
+router
+  .route("/admin/rentals")
+  .get(restrictTo("ADMIN"), getAllRentRequestByAdmin);
+
+router
+  .route("/admin/rentals/:id")
+  .get(restrictTo("ADMIN"), getRentRequestByAdminById)
+  .patch(restrictTo("ADMIN"), updateRentRequestByLandlordAndAdmin)
+  .delete(restrictTo("ADMIN"), deleteRentRequestByAdminById);
 
 export const rentalRouter = router;

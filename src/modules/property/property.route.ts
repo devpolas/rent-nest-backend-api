@@ -14,30 +14,30 @@ import {
 
 const router = Router();
 
-// public route
+// Public routes
 router.route("/properties").get(getAllProperties);
 router.route("/properties/:id").get(getPropertyById);
 
-// protected routes
+// Protected routes
 router.use(protect);
 
-// own property route
-router.use(restrictTo("LANDLORD"));
+// Landlord routes
 router
   .route("/landlord/properties")
-  .post(createProperty)
-  .get(getAllMyProperties);
+  .post(restrictTo("LANDLORD"), createProperty)
+  .get(restrictTo("LANDLORD"), getAllMyProperties);
+
 router
   .route("/landlord/properties/:id")
-  .patch(updateMyPropertyById)
-  .delete(deleteMyPropertyById);
+  .patch(restrictTo("LANDLORD"), updateMyPropertyById)
+  .delete(restrictTo("LANDLORD"), deleteMyPropertyById);
 
-// admin route
-router.use(restrictTo("ADMIN"));
-router.route("/properties").post(createPropertyByAdmin);
+// Admin routes
+router.route("/properties").post(restrictTo("ADMIN"), createPropertyByAdmin);
+
 router
-  .route("properties/:id")
-  .patch(updatePropertyByIdByAdmin)
-  .delete(deletePropertyById);
+  .route("/properties/:id")
+  .patch(restrictTo("ADMIN"), updatePropertyByIdByAdmin)
+  .delete(restrictTo("ADMIN"), deletePropertyById);
 
 export const propertyRouter = router;
