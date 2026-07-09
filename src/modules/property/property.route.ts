@@ -3,6 +3,7 @@ import { protect, restrictTo } from "../../middlewares/auth";
 import {
   createProperty,
   createPropertyByAdmin,
+  deleteMyPropertyById,
   deletePropertyById,
   getAllMyProperties,
   getAllProperties,
@@ -29,7 +30,7 @@ router
 router
   .route("/landlord/properties/:id")
   .patch(updateMyPropertyById)
-  .delete(deletePropertyById);
+  .delete(deleteMyPropertyById);
 
 // admin route
 router.use(restrictTo("ADMIN"));
