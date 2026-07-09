@@ -50,11 +50,21 @@ export const protect = catchAsync(
     }
 
     if (user.status === "BLOCKED") {
-      throw new Error("Your account has been blocked. Please contact support.");
+      throw new AppError(
+        "Your account has been blocked. Please contact support.",
+        httpStatus.FORBIDDEN,
+      );
     }
 
     if (user.status === "BANNED") {
-      throw new Error("Your account has been banned. Please contact support.");
+      throw new AppError(
+        "Your account has been banned. Please contact support.",
+        httpStatus.FORBIDDEN,
+      );
+    }
+
+    if (user.status !== "ACTIVE") {
+      throw new AppError("Your account is not active.", httpStatus.FORBIDDEN);
     }
 
     req.user = {
