@@ -120,7 +120,7 @@ export const updatePropertyByIdByAdmin = catchAsync(
 
     const body = CompleteUpdateAdminPropertySchema.parse(req.body);
 
-    const updatedProperty = updatePropertyIntoDB(id, body);
+    const updatedProperty = await updatePropertyIntoDB(id, body);
 
     sendResponse(res, {
       success: true,
@@ -132,13 +132,18 @@ export const updatePropertyByIdByAdmin = catchAsync(
     });
   },
 );
-export const updatePropertyById = catchAsync(
+
+export const updateMyPropertyById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id as string;
 
+    if (!req.user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    }
+
     const body = CompleteUpdatePropertySchema.parse(req.body);
 
-    const updatedProperty = updatePropertyIntoDB(id, body);
+    const updatedProperty = await updatePropertyIntoDB(id, body, req.user.id);
 
     sendResponse(res, {
       success: true,
@@ -147,6 +152,24 @@ export const updatePropertyById = catchAsync(
       data: {
         user: updatedProperty,
       },
+    });
+  },
+);
+
+export const deleteMyPropertyById = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id as string;
+
+    if (!req.user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    }
+
+    await deletePropertyFromDB(id, req.user.id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.NO_CONTENT,
+      message: "Property deleted successfully",
     });
   },
 );

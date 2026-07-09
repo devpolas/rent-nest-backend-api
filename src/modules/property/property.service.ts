@@ -201,6 +201,7 @@ export const createPropertyIntoDB = async (property: PropertyInputType) => {
 export const updatePropertyIntoDB = async (
   id: string,
   property: PropertyUpdateInputType,
+  currentLandlordId?: string,
 ) => {
   const existingProperty = await prisma.property.findUnique({
     where: {
@@ -213,6 +214,10 @@ export const updatePropertyIntoDB = async (
 
   if (!existingProperty) {
     throw new AppError("Property doesn't exist", httpStatus.NOT_FOUND);
+  }
+
+  if (currentLandlordId && existingProperty.landlordId !== currentLandlordId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
   const propertyPayload = {
@@ -553,15 +558,22 @@ export const getPropertyByIdFromDB = async (id: string) => {
   return property;
 };
 
-export const deletePropertyFromDB = async (id: string) => {
-  const property = await prisma.property.findUnique({
+export const deletePropertyFromDB = async (
+  id: string,
+  currentLandlordId?: string,
+) => {
+  const existingProperty = await prisma.property.findUnique({
     where: {
       id,
     },
   });
 
-  if (!property) {
+  if (!existingProperty) {
     throw new AppError("This Property doesn't exits", httpStatus.NOT_FOUND);
+  }
+
+  if (currentLandlordId && existingProperty.landlordId !== currentLandlordId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
   await prisma.property.delete({

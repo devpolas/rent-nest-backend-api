@@ -7,7 +7,7 @@ import {
   getAllMyProperties,
   getAllProperties,
   getPropertyById,
-  updatePropertyById,
+  updateMyPropertyById,
   updatePropertyByIdByAdmin,
 } from "./property.controller";
 
@@ -28,7 +28,7 @@ router
   .get(getAllMyProperties);
 router
   .route("/landlord/properties/:id")
-  .patch(updatePropertyById)
+  .patch(updateMyPropertyById)
   .delete(deletePropertyById);
 
 // admin route
