@@ -1,7 +1,6 @@
 import * as z from "zod";
 
 export const RentalRequestSchema = z.object({
-  tenantId: z.uuid(),
   propertyId: z.uuid(),
   message: z.string().min(1),
   moveInDate: z.coerce.date(),

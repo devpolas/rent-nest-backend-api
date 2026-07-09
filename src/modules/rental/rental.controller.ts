@@ -18,9 +18,12 @@ import { AppError } from "../../utils/appError";
 
 export const createRentRequest = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+    }
     const body = RentalRequestSchema.parse(req.body);
 
-    const rentRequest = await createRentRequestIntoDB(body);
+    const rentRequest = await createRentRequestIntoDB(req.user.id, body);
 
     sendResponse(res, {
       statusCode: httpStatus.CREATED,

@@ -6,8 +6,11 @@ import type {
 } from "./rental.schema";
 import httpStatus from "http-status";
 
-export const createRentRequestIntoDB = async (payload: RentalRequestType) => {
-  const { tenantId, propertyId, leaseMonths, message, moveInDate } = payload;
+export const createRentRequestIntoDB = async (
+  tenantId: string,
+  payload: RentalRequestType,
+) => {
+  const { propertyId, leaseMonths, message, moveInDate } = payload;
 
   const isExitsRentRequestByTenant = await prisma.rentalRequests.findUnique({
     where: {
