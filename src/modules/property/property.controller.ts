@@ -116,6 +116,10 @@ export const getPropertyById = catchAsync(
 
 export const updatePropertyByIdByAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+    }
+
     const id = req.params.id as string;
 
     const body = CompleteUpdateAdminPropertySchema.parse(req.body);
@@ -176,6 +180,10 @@ export const deleteMyPropertyById = catchAsync(
 
 export const deletePropertyById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+    }
+
     const id = req.params.id as string;
 
     await deletePropertyFromDB(id);
