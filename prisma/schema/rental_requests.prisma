@@ -2,7 +2,7 @@ model RentalRequests{
   id String @id @default(uuid())
 
   tenantId String
-  propertyId String @unique
+  propertyId String
   landlordId String
 
   message String @db.Text
@@ -11,7 +11,10 @@ model RentalRequests{
   leaseMonths Int
 
   property Property @relation(fields: [propertyId],references: [id],onDelete: Cascade)
-  tenant User @relation(fields: [tenantId],references: [id],onDelete: Cascade)
+
+  tenant User @relation( name: "tenant", fields: [tenantId],references: [id],onDelete: Cascade)
+
+  landlord User @relation(name:"landlord",fields: [landlordId], references: [id],onDelete: Cascade)
 
   status RentalRequestStatus @default(PENDING)
 
@@ -21,6 +24,8 @@ model RentalRequests{
   @@index([propertyId,tenantId])
   @@index([tenantId])
   @@index([propertyId])
+  
+  @@unique([tenantId, propertyId])
 
   @@map("rental_requests")
 }
