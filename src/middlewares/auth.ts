@@ -34,14 +34,11 @@ export const protect = catchAsync(
 
     const decode = verifyToken(token, "accessToken");
 
-    const { id, name, email, role } = decode as JwtPayload;
+    const { id } = decode as JwtPayload;
 
     const user = await prisma.user.findUnique({
       where: {
         id,
-        name,
-        email,
-        role,
       },
       omit: {
         password: true,
