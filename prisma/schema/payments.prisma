@@ -5,12 +5,10 @@ model Payment {
   currency String @db.VarChar(20)
 
   provider String @db.VarChar(20)
-
-  paymentIntentId String
-  transactionId String
+  transactionId String @unique
 
   expireIn DateTime
-  status PaymentStatus @default(ACTIVE)
+  status PaymentStatus @default(SUCCESS)
 
 
   propertyId String
@@ -24,6 +22,7 @@ model Payment {
   @@index([tenantId])
   @@index([propertyId])
   @@index([amount])
+  @@unique([propertyId, tenantId, status])
 
   @@map("payments")
 }
