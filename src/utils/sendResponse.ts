@@ -40,13 +40,14 @@ export const sendResponse = <T>(
 export const sendResponseToCookies = (
   res: Response,
   response: CookieResponse,
-) => {
+): Response => {
   const { cookieKey, keyValue, maxAge } = response;
 
-  res.cookie(cookieKey, keyValue, {
+  return res.cookie(cookieKey, keyValue, {
     httpOnly: true,
     secure: config.node_env === "production",
-    sameSite: "none",
+    sameSite: config.node_env === "production" ? "none" : "lax",
     maxAge,
+    path: "/",
   });
 };
