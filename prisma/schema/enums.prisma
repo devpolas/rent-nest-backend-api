@@ -60,6 +60,8 @@ enum RentalRequestStatus {
 enum PaymentStatus {
   PENDING
   SUCCESS
+  ACTIVE
   FAILED
   REFUNDED
+  EXPIRED
 }
