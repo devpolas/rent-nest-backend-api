@@ -21,6 +21,7 @@ export const createRentRequest = catchAsync(
     if (!req.user) {
       throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
     }
+
     const body = RentalRequestSchema.parse(req.body);
 
     const rentRequest = await createRentRequestIntoDB(req.user.id, body);
@@ -53,7 +54,7 @@ export const updateRentRequestByLandlordAndAdmin = catchAsync(
     );
 
     sendResponse(res, {
-      statusCode: httpStatus.CREATED,
+      statusCode: httpStatus.OK,
       success: true,
       message: "Rent request created successfully",
       data: {
@@ -75,7 +76,7 @@ export const updateRentRequestByTenantById = catchAsync(
     const rentRequest = await updateRentRequestIntoDB(id, body, req.user.id);
 
     sendResponse(res, {
-      statusCode: httpStatus.CREATED,
+      statusCode: httpStatus.OK,
       success: true,
       message: "Rent request created successfully",
       data: {
@@ -94,7 +95,7 @@ export const getAllRentRequestByTenant = catchAsync(
     const rents = await getAllRentRequestsFromDB(req.user.id, undefined);
 
     sendResponse(res, {
-      statusCode: httpStatus.CREATED,
+      statusCode: httpStatus.OK,
       success: true,
       message: "Rent requests retrieved successfully",
       data: { rents },
@@ -149,7 +150,7 @@ export const getAllRentRequestByOwner = catchAsync(
     const rents = await getAllRentRequestsFromDB(undefined, req.user.id);
 
     sendResponse(res, {
-      statusCode: httpStatus.CREATED,
+      statusCode: httpStatus.OK,
       success: true,
       message: "Rent requests retrieved successfully",
       data: { rents },
@@ -203,7 +204,7 @@ export const getAllRentRequestByAdmin = catchAsync(
     const rents = await getAllRentRequestsFromDB();
 
     sendResponse(res, {
-      statusCode: httpStatus.CREATED,
+      statusCode: httpStatus.OK,
       success: true,
       message: "Rent requests retrieved successfully",
       data: { rents },
