@@ -7,8 +7,7 @@ import type {
 import httpStatus from "http-status";
 
 export const createRentRequestIntoDB = async (payload: RentalRequestType) => {
-  const { landlordId, tenantId, propertyId, leaseMonths, message, moveInDate } =
-    payload;
+  const { tenantId, propertyId, leaseMonths, message, moveInDate } = payload;
 
   const isExitsRentRequestByTenant = await prisma.rentalRequests.findUnique({
     where: {
@@ -21,22 +20,6 @@ export const createRentRequestIntoDB = async (payload: RentalRequestType) => {
 
   if (isExitsRentRequestByTenant) {
     throw new AppError("Rent request already exists", httpStatus.BAD_REQUEST);
-  }
-
-  const isExitsLandlord = await prisma.user.findUnique({
-    where: {
-      id: landlordId,
-    },
-    omit: {
-      password: true,
-    },
-  });
-
-  if (!isExitsLandlord) {
-    throw new AppError(
-      "Landlord not found, Failed to createRentRequest",
-      httpStatus.BAD_REQUEST,
-    );
   }
 
   const isExitsTenant = await prisma.user.findUnique({
@@ -72,7 +55,7 @@ export const createRentRequestIntoDB = async (payload: RentalRequestType) => {
     data: {
       tenantId,
       propertyId,
-      landlordId,
+      landlordId: isExitsProperty.landlordId,
       message,
       moveInDate,
       leaseMonths,
