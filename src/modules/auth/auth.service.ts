@@ -35,7 +35,6 @@ export const createUser = async (payload: SignupPayload) => {
   const user = await prisma.user.findUnique({
     where: {
       id: createdUser.id,
-      email: createdUser.email,
     },
     omit: {
       password: true,
@@ -93,14 +92,11 @@ export const createAccessToken = async (token: string) => {
     throw new AppError("login first", httpStatus.UNAUTHORIZED);
   }
   const decode = verifyToken(token, "refreshToken");
-  const { id, name, email, role } = decode as JwtPayload;
+  const { id } = decode as JwtPayload;
 
   const user = await prisma.user.findUnique({
     where: {
       id,
-      name,
-      email,
-      role,
     },
   });
 
@@ -109,10 +105,16 @@ export const createAccessToken = async (token: string) => {
   }
 
   if (user.status === "BLOCKED") {
-    throw new Error("Your account has been blocked. Please contact support.");
+    throw new AppError(
+      "Your account has been blocked. Please contact support.",
+      httpStatus.FORBIDDEN,
+    );
   }
   if (user.status === "BANNED") {
-    throw new Error("Your account has been banned. Please contact support.");
+    throw new AppError(
+      "Your account has been banned. Please contact support.",
+      httpStatus.FORBIDDEN,
+    );
   }
 
   const jwtPayload = {
