@@ -56,7 +56,7 @@ export const updateRentRequestByLandlordAndAdmin = catchAsync(
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: "Rent request created successfully",
+      message: "Rent request updated successfully",
       data: {
         rent: rentRequest,
       },
@@ -78,7 +78,7 @@ export const updateRentRequestByTenantById = catchAsync(
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: "Rent request created successfully",
+      message: "Rent request updated successfully",
       data: {
         rent: rentRequest,
       },
