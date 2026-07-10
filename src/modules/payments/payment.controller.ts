@@ -37,8 +37,7 @@ export const getSession = catchAsync(
       throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
     }
 
-    const session = await paymentCreateIntoDB;
-    ({ sessionId });
+    const session = await paymentCreateIntoDB({ sessionId });
 
     sendResponse(res, {
       success: true,

@@ -167,6 +167,8 @@ export const paymentCreateIntoDB = async ({
     },
   });
 
+  console.log(existingPayment);
+
   if (existingPayment) {
     return existingPayment;
   }
