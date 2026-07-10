@@ -31,11 +31,7 @@ export const checkout = async ({
           title: true,
           description: true,
           rent: true,
-          images: {
-            select: {
-              url: true,
-            },
-          },
+          securityDeposit: true,
         },
       },
     },
@@ -92,9 +88,9 @@ export const checkout = async ({
     );
   }
 
-  const propertyImages = property.images.map((img: any) => img.url);
-
-  const totalPrice = Number(property.rent) * Number(leaseMonths);
+  const totalPrice =
+    Number(property.rent) * Number(leaseMonths) +
+    Number(property.securityDeposit);
 
   // Stripe expects smallest currency unit
   // Example: $100.00 => 10000
@@ -109,7 +105,6 @@ export const checkout = async ({
           product_data: {
             name: `Please pay for ${property.title}`,
             description: property.description,
-            images: propertyImages,
           },
         },
         quantity: 1,

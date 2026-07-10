@@ -14,11 +14,15 @@ import {
   updateRentRequestByLandlordAndAdmin,
   updateRentRequestByTenantById,
 } from "./rental.controller";
+import { paymentRouter } from "../payments/payment.route";
 
 const router = Router();
 
 // Protected routes
 router.use(protect);
+
+// forward to payment router
+router.use("/rentals/:rentRequestId/payment", paymentRouter);
 
 // Tenant routes
 router
