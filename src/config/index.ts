@@ -13,5 +13,6 @@ export default {
   jwt_access_expire_in: process.env.JWT_ACCESS_EXPIRES_IN as StringValue,
   jwt_refresh_secret: process.env.JWT_REFRESH_SECRET as string,
   jwt_refresh_expire_in: process.env.JWT_REFRESH_EXPIRES_IN as StringValue,
-  stripe_secret: process.env.STRIPE_SECRET,
+  stripe_secret: process.env.STRIPE_SECRET as StringValue,
+  website_url: process.env.WEBSITE_URL as StringValue,
 };
