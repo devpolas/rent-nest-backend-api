@@ -96,6 +96,15 @@ export const checkout = async ({
   // Example: $100.00 => 10000
   const amountInCents = Math.round(totalPrice * 100);
 
+  await prisma.rentalRequests.update({
+    where: {
+      id: existingRentRequest.id,
+    },
+    data: {
+      status: "PAYMENT_PENDING",
+    },
+  });
+
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -125,15 +134,6 @@ export const checkout = async ({
     success_url: `${config.website_url}/payment?success=true&session_id={CHECKOUT_SESSION_ID}`,
 
     cancel_url: `${config.website_url}/payment?success=false`,
-  });
-
-  await prisma.rentalRequests.update({
-    where: {
-      id: existingRentRequest.id,
-    },
-    data: {
-      status: "PAYMENT_PENDING",
-    },
   });
 
   return session;
