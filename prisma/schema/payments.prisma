@@ -23,6 +23,7 @@ model Payment {
 
   @@index([expireIn])
   @@index([tenantId])
+  @@index([landlordId])
   @@index([propertyId])
   @@index([amount])
   @@unique([propertyId, tenantId, status])
