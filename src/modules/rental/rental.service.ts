@@ -10,7 +10,7 @@ export const createRentRequestIntoDB = async (
   tenantId: string,
   payload: RentalRequestType,
 ) => {
-  const { propertyId, leaseMonths, message, moveInDate } = payload;
+  const { propertyId, leaseDays, message, moveInDate } = payload;
 
   const isExitsRentRequestByTenant = await prisma.rentalRequests.findUnique({
     where: {
@@ -61,7 +61,7 @@ export const createRentRequestIntoDB = async (
       landlordId: isExitsProperty.landlordId,
       message,
       moveInDate,
-      leaseMonths,
+      leaseDays,
     },
   });
 
@@ -138,8 +138,8 @@ export const updateRentRequestIntoDB = async (
   const rentPayload = {
     ...(payload.message !== undefined && { message: payload.message }),
     ...(payload.moveInDate !== undefined && { moveInDate: payload.moveInDate }),
-    ...(payload.leaseMonths !== undefined && {
-      leaseMonths: payload.leaseMonths,
+    ...(payload.leaseDays !== undefined && {
+      leaseDays: payload.leaseDays,
     }),
     ...(payload.status !== undefined && { status: payload.status }),
   };

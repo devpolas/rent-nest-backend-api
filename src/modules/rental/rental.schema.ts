@@ -4,13 +4,13 @@ export const RentalRequestSchema = z.object({
   propertyId: z.uuid(),
   message: z.string().min(1),
   moveInDate: z.coerce.date(),
-  leaseMonths: z.int().nonnegative(),
+  leaseDays: z.int().nonnegative(),
 });
 
 export const RentalRequestTenantUpdateSchema = z.object({
   message: z.string().min(1),
   moveInDate: z.coerce.date(),
-  leaseMonths: z.int().nonnegative(),
+  leaseDays: z.int().nonnegative(),
 });
 
 export const AdminAndOwnerUpdateSchema = z.object({

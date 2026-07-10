@@ -8,7 +8,7 @@ model RentalRequests{
   message String @db.Text
 
   moveInDate DateTime
-  leaseMonths Int
+  leaseDays Int
 
   property Property @relation(fields: [propertyId],references: [id],onDelete: Cascade)
 

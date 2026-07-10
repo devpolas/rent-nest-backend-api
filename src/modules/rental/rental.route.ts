@@ -21,14 +21,14 @@ const router = Router();
 // Protected routes
 router.use(protect);
 
-// forward to payment router
-router.use("/rentals/:rentRequestId/payment", paymentRouter);
-
 // Tenant routes
 router
   .route("/rentals")
   .post(restrictTo("TENANT"), createRentRequest)
   .get(restrictTo("TENANT"), getAllRentRequestByTenant);
+
+// forward to payment router
+router.use("/rentals/:rentRequestId/payment", paymentRouter);
 
 router
   .route("/rentals/:id")
