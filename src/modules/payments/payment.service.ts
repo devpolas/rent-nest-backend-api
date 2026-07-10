@@ -219,6 +219,7 @@ export const paymentCreateIntoDB = async ({
       status: true,
       propertyId: true,
       tenantId: true,
+      landlordId: true,
     },
   });
 
@@ -246,6 +247,7 @@ export const paymentCreateIntoDB = async ({
         currency,
         propertyId: currentRentRequest.propertyId,
         tenantId: currentRentRequest.tenantId,
+        landlordId: currentRentRequest.landlordId,
         transactionId,
         status: "SUCCESS",
         provider: "STRIPE",
@@ -259,6 +261,85 @@ export const paymentCreateIntoDB = async ({
       transactionId,
     },
   });
+
+  return paymentHistory;
+};
+
+export const getAllPaymentHistoryFromDB = async ({
+  tenantId,
+  landlordId,
+}: {
+  tenantId?: string;
+  landlordId?: string;
+}) => {
+  const paymentHistory = await prisma.payment.findMany({
+    where: {
+      ...(tenantId && {
+        tenantId,
+      }),
+      ...(landlordId && {
+        landlordId,
+      }),
+    },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return paymentHistory;
+};
+
+export const getPaymentHistoryByIdFromDB = async ({
+  transactionId,
+  tenantId,
+  landlordId,
+}: {
+  transactionId: string;
+  tenantId?: string;
+  landlordId?: string;
+}) => {
+  const paymentHistory = await prisma.payment.findUnique({
+    where: {
+      transactionId,
+    },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      landlord: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!paymentHistory) {
+    throw new AppError("Payment not found", httpStatus.NOT_FOUND);
+  }
+
+  if (tenantId && paymentHistory.tenantId !== tenantId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+  }
+  if (tenantId && paymentHistory.landlordId !== landlordId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+  }
 
   return paymentHistory;
 };
