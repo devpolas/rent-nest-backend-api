@@ -41,6 +41,7 @@ export const getAllUsersFromDB = async () => {
     omit: {
       password: true,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   if (!user) {
