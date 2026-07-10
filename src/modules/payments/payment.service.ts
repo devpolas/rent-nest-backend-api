@@ -13,7 +13,7 @@ export const checkout = async ({
   rentRequestId: string;
   tenantId: string;
 }): Promise<Stripe.Checkout.Session> => {
-  const isExitsRentRequest = await prisma.rentalRequests.findUnique({
+  const existingRentRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentRequestId,
     },
@@ -40,21 +40,21 @@ export const checkout = async ({
     },
   });
 
-  if (!isExitsRentRequest) {
+  if (!existingRentRequest) {
     throw new AppError(
       "Rent Request not found, Payment failed",
       httpStatus.NOT_FOUND,
     );
   }
 
-  if (isExitsRentRequest.status !== "APPROVED") {
+  if (existingRentRequest.status !== "APPROVED") {
     throw new AppError(
       "Rent request has not been approved.",
       httpStatus.BAD_REQUEST,
     );
   }
 
-  const { tenant, property, leaseDays, id } = isExitsRentRequest;
+  const { tenant, property, leaseDays, id } = existingRentRequest;
 
   if (!tenant || !property) {
     throw new AppError("Invalid rental request data.", httpStatus.BAD_REQUEST);
@@ -71,7 +71,7 @@ export const checkout = async ({
     throw new AppError("Invalid lease duration.", httpStatus.BAD_REQUEST);
   }
 
-  const isExitsPayment = await prisma.payment.findUnique({
+  const existingPayment = await prisma.payment.findUnique({
     where: {
       propertyId_tenantId_status: {
         propertyId: property.id,
@@ -81,7 +81,7 @@ export const checkout = async ({
     },
   });
 
-  if (isExitsPayment) {
+  if (existingPayment) {
     throw new AppError(
       "Payment has already been completed.",
       httpStatus.BAD_REQUEST,
@@ -125,6 +125,15 @@ export const checkout = async ({
     success_url: `${config.website_url}/payment?success=true&session_id={CHECKOUT_SESSION_ID}`,
 
     cancel_url: `${config.website_url}/payment?success=false`,
+  });
+
+  await prisma.rentalRequests.update({
+    where: {
+      id: existingRentRequest.id,
+    },
+    data: {
+      status: "PAYMENT_PENDING",
+    },
   });
 
   return session;
@@ -215,7 +224,7 @@ export const paymentCreateIntoDB = async ({
     throw new AppError("Rent request not found", httpStatus.NOT_FOUND);
   }
 
-  if (currentRentRequest.status !== "APPROVED") {
+  if (currentRentRequest.status !== "PAYMENT_PENDING") {
     throw new AppError(
       "Rental request is no longer eligible for payment.",
       httpStatus.BAD_REQUEST,
