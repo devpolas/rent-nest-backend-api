@@ -477,6 +477,7 @@ export const getAllPropertiesFromDB = async () => {
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
   return properties;
@@ -512,6 +513,7 @@ export const getAllMyPropertiesFromDB = async (userId: string) => {
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
   return properties;
