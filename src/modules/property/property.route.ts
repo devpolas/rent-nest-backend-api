@@ -11,6 +11,7 @@ import {
   updateMyPropertyById,
   updatePropertyByIdByAdmin,
 } from "./property.controller";
+import { reviewRouter } from "../reviews/review.route";
 
 const router = Router();
 
@@ -20,6 +21,8 @@ router.route("/properties/:id").get(getPropertyById);
 
 // Protected routes
 router.use(protect);
+
+router.use("/properties/:propertyId/reviews", reviewRouter);
 
 // Landlord routes
 router
