@@ -246,6 +246,7 @@ export const getAllRentRequestsFromDB = async (
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
 
   return rents;
