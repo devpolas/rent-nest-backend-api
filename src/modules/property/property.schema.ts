@@ -11,15 +11,15 @@ export const PropertySchema = z.object({
   availableFrom: z.coerce.date(),
   availability: z
     .enum(["AVAILABLE", "RESERVED", "RENTED", "UNAVAILABLE"])
-    .default("AVAILABLE"),
+    .optional(),
   status: z
     .enum(["PENDING", "APPROVED", "REJECTED", "RENTED", "ARCHIVED"])
-    .default("PENDING"),
-  images: z.array(z.url()),
+    .optional(),
+  images: z.array(z.url()).min(1),
   categoryId: z.uuid(),
-  amenities: z.array(z.uuid()),
-  features: z.array(z.uuid()),
-  rules: z.array(z.uuid()),
+  amenities: z.array(z.uuid()).min(1),
+  features: z.array(z.uuid()).min(1),
+  rules: z.array(z.uuid()).min(1),
 });
 
 export const AdminSchema = z.object({
@@ -56,9 +56,9 @@ export const PropertyUpdateSchema = z.object({
     .optional(),
   images: z.array(z.url()).optional(),
   categoryId: z.uuid().optional(),
-  amenities: z.array(z.uuid()).optional(),
-  features: z.array(z.uuid()).optional(),
-  rules: z.array(z.uuid()).optional(),
+  amenities: z.array(z.uuid()).min(1).optional(),
+  features: z.array(z.uuid()).min(1).optional(),
+  rules: z.array(z.uuid()).min(1).optional(),
 });
 
 export const LocationUpdateSchema = z.object({
@@ -93,8 +93,14 @@ export const CompleteUpdateAdminPropertySchema = PropertyUpdateSchema.extend({
   ...AdminUpdateSchema.shape,
 });
 
-export type PropertyInputType = z.infer<typeof PropertyAdminSchema>;
+export type PropertyInputType = z.infer<typeof CompletePropertySchema>;
+
+export type AdminPropertyInputType = z.infer<typeof PropertyAdminSchema>;
 
 export type PropertyUpdateInputType = z.infer<
+  typeof CompleteUpdatePropertySchema
+>;
+
+export type AdminPropertyUpdateInputType = z.infer<
   typeof CompleteUpdateAdminPropertySchema
 >;

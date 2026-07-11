@@ -8,27 +8,50 @@ import {
   getPropertyByIdFromDB,
   getAllPropertiesFromDB,
   updatePropertyIntoDB,
-  getAllMyPropertiesFromDB,
 } from "./property.service";
 import {
   CompletePropertySchema,
   CompleteUpdateAdminPropertySchema,
   CompleteUpdatePropertySchema,
   PropertyAdminSchema,
+  type AdminPropertyInputType,
+  type AdminPropertyUpdateInputType,
+  type PropertyInputType,
+  type PropertyUpdateInputType,
 } from "./property.schema";
 import { sendResponse } from "../../utils/sendResponse";
 
 export const createProperty = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
+    const user = req.user;
+
+    let body: PropertyInputType | AdminPropertyInputType;
+
+    const filter: {
+      landlordId?: string;
+    } = {};
+
+    if (!user) {
       throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
     }
 
-    const body = CompletePropertySchema.parse(req.body);
+    if (user.role === "LANDLORD") {
+      filter.landlordId = user.id;
+    }
 
-    const property = await createPropertyIntoDB({
-      ...body,
-      landlordId: req.user.id,
+    if (user.role === "LANDLORD") {
+      body = CompletePropertySchema.parse(req.body);
+    } else if (user.role === "ADMIN") {
+      body = PropertyAdminSchema.parse(req.body);
+    } else {
+      throw new AppError("Forbidden", httpStatus.FORBIDDEN);
+    }
+
+    const property =
+      user.role === "LANDLORD" ? { ...body, landlordId: user.id } : body;
+
+    const newProperty = await createPropertyIntoDB({
+      property,
     });
 
     sendResponse(res, {
@@ -36,28 +59,7 @@ export const createProperty = catchAsync(
       statusCode: httpStatus.CREATED,
       message: "Property created successfully",
       data: {
-        property,
-      },
-    });
-  },
-);
-
-export const createPropertyByAdmin = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
-    }
-
-    const body = PropertyAdminSchema.parse(req.body);
-
-    const property = await createPropertyIntoDB(body);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Property created successfully",
-      data: {
-        property,
+        property: newProperty,
       },
     });
   },
@@ -65,26 +67,17 @@ export const createPropertyByAdmin = catchAsync(
 
 export const getAllProperties = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const properties = await getAllPropertiesFromDB();
+    const user = req.user;
 
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Properties retrieved successfully",
-      data: {
-        properties,
-      },
-    });
-  },
-);
+    const filter: {
+      landlordId?: string;
+    } = {};
 
-export const getAllMyProperties = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    if (user) {
+      filter.landlordId = user.id;
     }
 
-    const properties = await getAllMyPropertiesFromDB(req.user.id);
+    const properties = await getAllPropertiesFromDB({ ...filter });
 
     sendResponse(res, {
       success: true,
@@ -114,17 +107,34 @@ export const getPropertyById = catchAsync(
   },
 );
 
-export const updatePropertyByIdByAdmin = catchAsync(
+export const updatePropertyById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+    const id = req.params.id as string;
+    const user = req.user;
+    let body: PropertyUpdateInputType | AdminPropertyUpdateInputType;
+
+    const filter: {
+      currentLandlord?: string;
+    } = {};
+
+    if (!user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
     }
 
-    const id = req.params.id as string;
+    if (user.role === "LANDLORD") {
+      filter.currentLandlord = user.id;
+      body = CompleteUpdatePropertySchema.parse(req.body);
+    } else if (user.role === "ADMIN") {
+      body = CompleteUpdateAdminPropertySchema.parse(req.body);
+    } else {
+      throw new AppError("Forbidden", httpStatus.FORBIDDEN);
+    }
 
-    const body = CompleteUpdateAdminPropertySchema.parse(req.body);
-
-    const updatedProperty = await updatePropertyIntoDB(id, body);
+    const updatedProperty = await updatePropertyIntoDB({
+      id,
+      property: body,
+      ...filter,
+    });
 
     sendResponse(res, {
       success: true,
@@ -133,60 +143,27 @@ export const updatePropertyByIdByAdmin = catchAsync(
       data: {
         user: updatedProperty,
       },
-    });
-  },
-);
-
-export const updateMyPropertyById = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const id = req.params.id as string;
-
-    if (!req.user) {
-      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
-    }
-
-    const body = CompleteUpdatePropertySchema.parse(req.body);
-
-    const updatedProperty = await updatePropertyIntoDB(id, body, req.user.id);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: "Property updated successfully",
-      data: {
-        user: updatedProperty,
-      },
-    });
-  },
-);
-
-export const deleteMyPropertyById = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const id = req.params.id as string;
-
-    if (!req.user) {
-      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
-    }
-
-    await deletePropertyFromDB(id, req.user.id);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.NO_CONTENT,
-      message: "Property deleted successfully",
     });
   },
 );
 
 export const deletePropertyById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
-    }
-
     const id = req.params.id as string;
 
-    await deletePropertyFromDB(id);
+    const filter: {
+      landlordId?: string;
+    } = {};
+
+    if (!req.user) {
+      throw new AppError("Unauthorize", httpStatus.UNAUTHORIZED);
+    }
+
+    if (req.user.role === "LANDLORD") {
+      filter.landlordId = req.user.id;
+    }
+
+    await deletePropertyFromDB({ id, ...filter });
 
     sendResponse(res, {
       success: true,

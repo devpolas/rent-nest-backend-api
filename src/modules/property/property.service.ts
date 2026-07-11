@@ -1,15 +1,20 @@
 import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 import type {
+  AdminPropertyInputType,
+  AdminPropertyUpdateInputType,
   PropertyInputType,
   PropertyUpdateInputType,
 } from "./property.schema";
 import slugify from "slugify";
 import httpStatus from "http-status";
 
-export const createPropertyIntoDB = async (property: PropertyInputType) => {
+export const createPropertyIntoDB = async ({
+  property,
+}: {
+  property: PropertyInputType | AdminPropertyInputType;
+}) => {
   const {
-    landlordId,
     title,
     description,
     rent,
@@ -27,6 +32,15 @@ export const createPropertyIntoDB = async (property: PropertyInputType) => {
     rules,
     location,
   } = property;
+
+  const landlordId = "landlordId" in property ? property.landlordId : undefined;
+
+  if (!landlordId) {
+    throw new AppError(
+      "You can't create property without landlord",
+      httpStatus.UNAUTHORIZED,
+    );
+  }
 
   const {
     latitude,
@@ -198,11 +212,15 @@ export const createPropertyIntoDB = async (property: PropertyInputType) => {
   return createdProperty;
 };
 
-export const updatePropertyIntoDB = async (
-  id: string,
-  property: PropertyUpdateInputType,
-  currentLandlordId?: string,
-) => {
+export const updatePropertyIntoDB = async ({
+  id,
+  property,
+  currentLandlord,
+}: {
+  id: string;
+  property: PropertyUpdateInputType | AdminPropertyUpdateInputType;
+  currentLandlord?: string;
+}) => {
   const existingProperty = await prisma.property.findUnique({
     where: {
       id,
@@ -216,9 +234,12 @@ export const updatePropertyIntoDB = async (
     throw new AppError("Property doesn't exist", httpStatus.NOT_FOUND);
   }
 
-  if (currentLandlordId && existingProperty.landlordId !== currentLandlordId) {
+  if (currentLandlord && existingProperty.landlordId !== currentLandlord) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
+
+  const newLandlordId =
+    "landlordId" in property ? property.landlordId : undefined;
 
   const propertyPayload = {
     ...(property.title !== undefined && { title: property.title }),
@@ -320,10 +341,10 @@ export const updatePropertyIntoDB = async (
       data: {
         ...propertyPayload,
 
-        ...(property.landlordId && {
+        ...(newLandlordId && {
           landlord: {
             connect: {
-              id: property.landlordId,
+              id: newLandlordId,
             },
           },
         }),
@@ -447,45 +468,13 @@ export const updatePropertyIntoDB = async (
   return updatedProperty;
 };
 
-export const getAllPropertiesFromDB = async () => {
+export const getAllPropertiesFromDB = async ({
+  landlordId,
+}: {
+  landlordId?: string;
+}) => {
   const properties = await prisma.property.findMany({
-    where: {},
-    include: {
-      images: true,
-      location: true,
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: { password: true },
-      },
-
-      category: true,
-      amenities: {
-        include: {
-          amenity: true,
-        },
-      },
-      features: {
-        include: {
-          feature: true,
-        },
-      },
-      rules: {
-        include: {
-          rule: true,
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return properties;
-};
-
-export const getAllMyPropertiesFromDB = async (userId: string) => {
-  const properties = await prisma.property.findMany({
-    where: { landlordId: userId },
+    where: { ...(landlordId && { landlordId }) },
     include: {
       images: true,
       location: true,
@@ -560,10 +549,13 @@ export const getPropertyByIdFromDB = async (id: string) => {
   return property;
 };
 
-export const deletePropertyFromDB = async (
-  id: string,
-  currentLandlordId?: string,
-) => {
+export const deletePropertyFromDB = async ({
+  id,
+  landlordId,
+}: {
+  id: string;
+  landlordId?: string;
+}) => {
   const existingProperty = await prisma.property.findUnique({
     where: {
       id,
@@ -571,11 +563,11 @@ export const deletePropertyFromDB = async (
   });
 
   if (!existingProperty) {
-    throw new AppError("This Property doesn't exits", httpStatus.NOT_FOUND);
+    throw new AppError("Property not found", httpStatus.NOT_FOUND);
   }
 
-  if (currentLandlordId && existingProperty.landlordId !== currentLandlordId) {
-    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+  if (landlordId && existingProperty.landlordId !== landlordId) {
+    throw new AppError("Forbidden", httpStatus.FORBIDDEN);
   }
 
   await prisma.property.delete({

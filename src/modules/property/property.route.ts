@@ -2,45 +2,33 @@ import { Router } from "express";
 import { protect, restrictTo } from "../../middlewares/auth";
 import {
   createProperty,
-  createPropertyByAdmin,
-  deleteMyPropertyById,
-  deletePropertyById,
-  getAllMyProperties,
   getAllProperties,
   getPropertyById,
-  updateMyPropertyById,
-  updatePropertyByIdByAdmin,
+  updatePropertyById,
+  deletePropertyById,
 } from "./property.controller";
 import { reviewRouter } from "../reviews/review.route";
 
 const router = Router();
 
 // Public routes
-router.route("/properties").get(getAllProperties);
-router.route("/properties/:id").get(getPropertyById);
+router.route("/").get(getAllProperties);
+router.route("/:id").get(getPropertyById);
 
 // Protected routes
 router.use(protect);
 
-router.use("/properties/:propertyId/reviews", reviewRouter);
-
 // Landlord routes
-router
-  .route("/landlord/properties")
-  .post(restrictTo("LANDLORD"), createProperty)
-  .get(restrictTo("LANDLORD"), getAllMyProperties);
+router.route("/my").get(restrictTo("LANDLORD"), getAllProperties);
+
+// forward to review router
+router.use("/:propertyId/reviews", reviewRouter);
+
+router.route("/").post(restrictTo("LANDLORD", "ADMIN"), createProperty);
 
 router
-  .route("/landlord/properties/:id")
-  .patch(restrictTo("LANDLORD"), updateMyPropertyById)
-  .delete(restrictTo("LANDLORD"), deleteMyPropertyById);
-
-// Admin routes
-router.route("/properties").post(restrictTo("ADMIN"), createPropertyByAdmin);
-
-router
-  .route("/properties/:id")
-  .patch(restrictTo("ADMIN"), updatePropertyByIdByAdmin)
-  .delete(restrictTo("ADMIN"), deletePropertyById);
+  .route("/:id")
+  .patch(restrictTo("LANDLORD", "ADMIN"), updatePropertyById)
+  .delete(restrictTo("LANDLORD", "ADMIN"), deletePropertyById);
 
 export const propertyRouter = router;
