@@ -113,12 +113,17 @@ export const createRentRequestIntoDB = async (
   return rent;
 };
 
-export const updateRentRequestIntoDB = async (
-  rentId: string,
-  payload: RentalRequestAdminAndOwnerUpdateType,
-  tenantId?: string,
-  landlordId?: string,
-) => {
+export const updateRentRequestIntoDB = async ({
+  rentId,
+  payload,
+  tenantId,
+  landlordId,
+}: {
+  rentId: string;
+  payload: RentalRequestAdminAndOwnerUpdateType;
+  tenantId?: string;
+  landlordId?: string;
+}) => {
   const isExitsRentRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentId,
@@ -201,10 +206,13 @@ export const updateRentRequestIntoDB = async (
   return rent;
 };
 
-export const getAllRentRequestsFromDB = async (
-  tenantId?: string,
-  landlordId?: string,
-) => {
+export const getAllRentRequestsFromDB = async ({
+  tenantId,
+  landlordId,
+}: {
+  tenantId?: string;
+  landlordId?: string;
+}) => {
   const rents = await prisma.rentalRequests.findMany({
     where: { ...(tenantId && { tenantId }), ...(landlordId && { landlordId }) },
     include: {
@@ -252,11 +260,15 @@ export const getAllRentRequestsFromDB = async (
   return rents;
 };
 
-export const getRentRequestFromDB = async (
-  rentId: string,
-  tenantId?: string,
-  landlordId?: string,
-) => {
+export const getRentRequestFromDB = async ({
+  rentId,
+  tenantId,
+  landlordId,
+}: {
+  rentId: string;
+  tenantId?: string;
+  landlordId?: string;
+}) => {
   const isExitsRentRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentId,
@@ -322,11 +334,15 @@ export const getRentRequestFromDB = async (
   return rent;
 };
 
-export const deleteRentRequestFromDB = async (
-  rentId: string,
-  tenantId?: string,
-  landlordId?: string,
-) => {
+export const deleteRentRequestFromDB = async ({
+  rentId,
+  tenantId,
+  landlordId,
+}: {
+  rentId: string;
+  tenantId?: string;
+  landlordId?: string;
+}) => {
   const isExitsRentRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentId,

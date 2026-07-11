@@ -1,61 +1,48 @@
 import { Router } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { protect, restrictTo } from "../../middlewares/auth";
 import {
   createRentRequest,
-  deleteRentRequestByAdminById,
-  deleteRentRequestByOwnerById,
-  deleteRentRequestByTenantById,
-  getAllRentRequestByAdmin,
-  getAllRentRequestByOwner,
-  getAllRentRequestByTenant,
-  getRentRequestByAdminById,
-  getRentRequestByOwnerById,
-  getRentRequestByTenantById,
-  updateRentRequestByLandlordAndAdmin,
-  updateRentRequestByTenantById,
+  deleteRentRequest,
+  getAllRentRequests,
+  getRentRequest,
+  updateRentRequestByOwnerOrAdmin,
+  updateRentRequestByTenant,
 } from "./rental.controller";
 import { paymentRouter } from "../payments/payment.route";
+import { AppError } from "../../utils/appError";
+import httpStatus from "http-status";
 
 const router = Router();
 
-// Protected routes
 router.use(protect);
 
-// Tenant routes
+// Tenant create
 router
   .route("/")
   .post(restrictTo("TENANT"), createRentRequest)
-  .get(restrictTo("TENANT"), getAllRentRequestByTenant);
+  .get(restrictTo("TENANT", "LANDLORD", "ADMIN"), getAllRentRequests);
 
-// forward to payment router
+// Payment routes
 router.use("/:rentRequestId/payment", paymentRouter);
 
+// rent request
 router
   .route("/:id")
-  .get(restrictTo("TENANT"), getRentRequestByTenantById)
-  .patch(restrictTo("TENANT"), updateRentRequestByTenantById)
-  .delete(restrictTo("TENANT"), deleteRentRequestByTenantById);
+  .get(restrictTo("TENANT", "LANDLORD", "ADMIN"), getRentRequest)
+  .delete(restrictTo("TENANT", "LANDLORD", "ADMIN"), deleteRentRequest)
+  .patch(
+    restrictTo("TENANT", "LANDLORD", "ADMIN"),
+    (req: Request, res: Response, next: NextFunction) => {
+      if (!req.user) {
+        throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+      }
+      if (req.user.role === "TENANT") {
+        return updateRentRequestByTenant(req, res, next);
+      }
 
-// Landlord routes
-router
-  .route("/landlord/requests")
-  .get(restrictTo("LANDLORD"), getAllRentRequestByOwner);
-
-router
-  .route("/landlord/requests/:id")
-  .get(restrictTo("LANDLORD"), getRentRequestByOwnerById)
-  .patch(restrictTo("LANDLORD"), updateRentRequestByLandlordAndAdmin)
-  .delete(restrictTo("LANDLORD"), deleteRentRequestByOwnerById);
-
-// Admin routes
-router
-  .route("/admin/requests")
-  .get(restrictTo("ADMIN"), getAllRentRequestByAdmin);
-
-router
-  .route("/admin/requests/:id")
-  .get(restrictTo("ADMIN"), getRentRequestByAdminById)
-  .patch(restrictTo("ADMIN"), updateRentRequestByLandlordAndAdmin)
-  .delete(restrictTo("ADMIN"), deleteRentRequestByAdminById);
+      return updateRentRequestByOwnerOrAdmin(req, res, next);
+    },
+  );
 
 export const rentalRouter = router;
