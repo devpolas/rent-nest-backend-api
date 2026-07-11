@@ -133,6 +133,11 @@ export const updateRentRequestIntoDB = async ({
   if (!isExitsRentRequest) {
     throw new AppError("Rent request not found", httpStatus.NOT_FOUND);
   }
+
+  if (isExitsRentRequest.status !== "PENDING") {
+    throw new AppError("Forbidden", httpStatus.FORBIDDEN);
+  }
+
   if (
     (tenantId && tenantId !== isExitsRentRequest.tenantId) ||
     (landlordId && landlordId !== isExitsRentRequest.landlordId)

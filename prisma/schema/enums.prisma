@@ -55,6 +55,7 @@ enum RentalRequestStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentStatus {
