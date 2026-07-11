@@ -7,20 +7,33 @@ import {
   makePayment,
 } from "./payment.controller";
 
-const router = Router({ mergeParams: true });
+const router = Router();
 
-router.use(protect);
+// Create Stripe Checkout Session
+router.post(
+  "/",
+  protect,
+  restrictTo("TENANT", "LANDLORD", "ADMIN"),
+  makePayment,
+);
 
-router.route("/").post(restrictTo("TENANT", "LANDLORD", "ADMIN"), makePayment);
+// Get all payment history
+router.get(
+  "/",
+  protect,
+  restrictTo("TENANT", "LANDLORD", "ADMIN"),
+  getAllPaymentHistory,
+);
 
-router
-  .route("/")
-  .get(restrictTo("TENANT", "LANDLORD", "ADMIN"), getAllPaymentHistory);
+// Verify Stripe session & store payment
+router.get("/session/:sessionId", protect, getSession);
 
-router.route("/:sessionId").get(getSession);
-
-router
-  .route("/:transactionId")
-  .get(restrictTo("TENANT", "LANDLORD", "ADMIN"), getPaymentHistoryById);
+// Get payment by transaction ID
+router.get(
+  "/transaction/:transactionId",
+  protect,
+  restrictTo("TENANT", "LANDLORD", "ADMIN"),
+  getPaymentHistoryById,
+);
 
 export const paymentRouter = router;

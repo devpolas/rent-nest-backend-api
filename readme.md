@@ -589,7 +589,8 @@ POST /api/v1/rental-requests/:rentRequestId/payment
 ```
 POST /api/v1/payments
 GET  /api/v1/payments
-GET  /api/v1/payments/:transactionId
+GET  /api/v1/payments/session/:sessionId
+GET  /api/v1/payments/transaction/:transactionId
 ```
 
 ---
