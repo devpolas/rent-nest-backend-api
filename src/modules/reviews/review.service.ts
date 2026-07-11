@@ -1,7 +1,14 @@
+import type { RentalRequestStatus } from "../../../generated/prisma/enums";
 import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 import type { ReviewInputType, ReviewUpdateInputType } from "./review.schema";
 import httpStatus from "http-status";
+
+const allowedStatuses: RentalRequestStatus[] = [
+  "ACTIVE",
+  "EXPIRED",
+  "COMPLETED",
+];
 
 export const createReviewIntoDB = async ({
   tenantId,
@@ -37,7 +44,7 @@ export const createReviewIntoDB = async ({
     throw new AppError("Rental request not found", httpStatus.NOT_FOUND);
   }
 
-  if (rentalRequest.status !== "ACTIVE") {
+  if (!allowedStatuses.includes(rentalRequest.status)) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
