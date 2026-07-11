@@ -12,11 +12,12 @@ const router = Router({ mergeParams: true });
 router.use(protect);
 
 router.route("/").post(restrictTo("TENANT", "LANDLORD", "ADMIN"), makePayment);
-router.route("/:sessionId").get(getSession);
 
 router
   .route("/")
   .get(restrictTo("TENANT", "LANDLORD", "ADMIN"), getAllPaymentHistory);
+
+router.route("/:sessionId").get(getSession);
 
 router
   .route("/:transactionId")

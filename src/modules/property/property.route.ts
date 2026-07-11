@@ -21,10 +21,10 @@ router.route("/:id").get(getPropertyById);
 // Protected routes
 router.use(protect);
 
+router.route("/").post(restrictTo("LANDLORD", "ADMIN"), createProperty);
+
 // Landlord routes
 router.route("/my").get(restrictTo("LANDLORD"), getAllProperties);
-
-router.route("/").post(restrictTo("LANDLORD", "ADMIN"), createProperty);
 
 router
   .route("/:id")
