@@ -1,5 +1,5 @@
 import express from "express";
-import type { Application, Request, Response } from "express";
+import type { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { authRouter } from "./modules/auth/auth.routes";
 import globalErrorController from "./middlewares/error";
@@ -14,6 +14,7 @@ import { amenityRouter } from "./modules/amenity/amenity.route";
 import { categoryRouter } from "./modules/category/category.route";
 import { featureRouter } from "./modules/feature/feature.route";
 import { ruleRouter } from "./modules/rule/rule.route";
+import { AppError } from "./utils/appError";
 
 const app: Application = express();
 
@@ -29,6 +30,14 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    status: "OK",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/properties", propertyRouter);
@@ -39,6 +48,10 @@ app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/amenities", amenityRouter);
 app.use("/api/v1/features", featureRouter);
 app.use("/api/v1/rules", ruleRouter);
+
+app.all("/*splat", (req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server.`, 404));
+});
 
 app.use(globalErrorController);
 
