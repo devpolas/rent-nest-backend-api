@@ -23,15 +23,15 @@ router.use(protect);
 
 // Tenant routes
 router
-  .route("/rentals")
+  .route("/")
   .post(restrictTo("TENANT"), createRentRequest)
   .get(restrictTo("TENANT"), getAllRentRequestByTenant);
 
 // forward to payment router
-router.use("/rentals/:rentRequestId/payment", paymentRouter);
+router.use("/:rentRequestId/payment", paymentRouter);
 
 router
-  .route("/rentals/:id")
+  .route("/:id")
   .get(restrictTo("TENANT"), getRentRequestByTenantById)
   .patch(restrictTo("TENANT"), updateRentRequestByTenantById)
   .delete(restrictTo("TENANT"), deleteRentRequestByTenantById);
@@ -49,11 +49,11 @@ router
 
 // Admin routes
 router
-  .route("/admin/rentals")
+  .route("/admin/requests")
   .get(restrictTo("ADMIN"), getAllRentRequestByAdmin);
 
 router
-  .route("/admin/rentals/:id")
+  .route("/admin/requests/:id")
   .get(restrictTo("ADMIN"), getRentRequestByAdminById)
   .patch(restrictTo("ADMIN"), updateRentRequestByLandlordAndAdmin)
   .delete(restrictTo("ADMIN"), deleteRentRequestByAdminById);
