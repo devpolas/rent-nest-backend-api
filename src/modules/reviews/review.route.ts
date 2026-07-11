@@ -17,11 +17,11 @@ router.route("/:id").get(getReviewById);
 router.use(protect);
 router.route("/").post(createReview);
 
+router.route("/admin/all").get(restrictTo("ADMIN"), getAllReviews);
+
 router
   .route("/:id")
   .patch(restrictTo("TENANT", "ADMIN"), updateReview)
   .delete(restrictTo("TENANT", "ADMIN"), deleteReviewById);
-
-router.route("/admin/all").get(restrictTo("ADMIN"), getAllReviews);
 
 export const reviewRouter = router;
