@@ -238,8 +238,24 @@ export const updatePropertyIntoDB = async ({
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
+  const isRented = await prisma.rentalRequests.count({
+    where: {
+      propertyId: id,
+      status: "ACTIVE",
+    },
+  });
+
+  if (isRented > 0) {
+    throw new AppError(
+      "Cannot update a property with an active rental.",
+      httpStatus.FORBIDDEN,
+    );
+  }
+
   const newLandlordId =
-    "landlordId" in property ? property.landlordId : undefined;
+    "landlordId" in property && property.landlordId
+      ? property.landlordId
+      : undefined;
 
   const propertyPayload = {
     ...(property.title !== undefined && { title: property.title }),
