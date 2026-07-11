@@ -8,9 +8,9 @@ export const RentalRequestSchema = z.object({
 });
 
 export const RentalRequestTenantUpdateSchema = z.object({
-  message: z.string().min(1),
-  moveInDate: z.coerce.date(),
-  leaseDays: z.int().nonnegative(),
+  message: z.string().min(1).optional(),
+  moveInDate: z.coerce.date().optional(),
+  leaseDays: z.int().nonnegative().optional(),
 });
 
 export const AdminAndOwnerUpdateSchema = z.object({
