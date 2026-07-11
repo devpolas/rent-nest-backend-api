@@ -11,6 +11,9 @@ import { reviewRouter } from "../reviews/review.route";
 
 const router = Router();
 
+// forward to review router
+router.use("/:propertyId/reviews", reviewRouter);
+
 // Public routes
 router.route("/").get(getAllProperties);
 router.route("/:id").get(getPropertyById);
@@ -20,9 +23,6 @@ router.use(protect);
 
 // Landlord routes
 router.route("/my").get(restrictTo("LANDLORD"), getAllProperties);
-
-// forward to review router
-router.use("/:propertyId/reviews", reviewRouter);
 
 router.route("/").post(restrictTo("LANDLORD", "ADMIN"), createProperty);
 
