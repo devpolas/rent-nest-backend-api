@@ -126,7 +126,7 @@ export const updateReviewIntoDBById = async ({
   return review;
 };
 
-export const getReviewReviewFromDBById = async (reviewId: string) => {
+export const getReviewFromDBById = async (reviewId: string) => {
   const existingReview = await prisma.review.findUnique({
     where: {
       id: reviewId,
@@ -149,7 +149,7 @@ export const getReviewReviewFromDBById = async (reviewId: string) => {
   return existingReview;
 };
 
-export const getAllReviewReviewFromDB = async ({
+export const getAllReviewFromDB = async ({
   reviewerId,
 }: {
   reviewerId?: string;
@@ -177,9 +177,7 @@ export const getAllReviewReviewFromDB = async ({
   return reviews;
 };
 
-export const getAllReviewReviewFromDBByPropertyId = async (
-  propertyId: string,
-) => {
+export const getAllReviewFromDBByPropertyId = async (propertyId: string) => {
   const reviews = await prisma.review.findMany({
     where: { propertyId },
     include: {
@@ -199,7 +197,7 @@ export const getAllReviewReviewFromDBByPropertyId = async (
   return reviews;
 };
 
-export const deleteReviewReviewFromDBById = async ({
+export const deleteReviewFromDBById = async ({
   id,
   reviewerId,
 }: {

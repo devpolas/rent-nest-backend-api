@@ -4,10 +4,10 @@ import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
 import {
   createReviewIntoDB,
-  deleteReviewReviewFromDBById,
-  getAllReviewReviewFromDB,
-  getAllReviewReviewFromDBByPropertyId,
-  getReviewReviewFromDBById,
+  deleteReviewFromDBById,
+  getAllReviewFromDB,
+  getAllReviewFromDBByPropertyId,
+  getReviewFromDBById,
   updateReviewIntoDBById,
 } from "./review.service";
 import { ReviewSchema, ReviewUpdateSchema } from "./review.schema";
@@ -81,7 +81,7 @@ export const getReviewById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id as string;
 
-    const review = await getReviewReviewFromDBById(id);
+    const review = await getReviewFromDBById(id);
 
     sendResponse(res, {
       success: true,
@@ -97,7 +97,7 @@ export const getReviewById = catchAsync(
 export const getReviewsByPropertyId = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const propertyId = req.params.propertyId as string;
-    const reviews = await getAllReviewReviewFromDBByPropertyId(propertyId);
+    const reviews = await getAllReviewFromDBByPropertyId(propertyId);
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
@@ -125,7 +125,7 @@ export const getAllReviews = catchAsync(
       filter.reviewerId = user.id;
     }
 
-    const reviews = await getAllReviewReviewFromDB({ ...filter });
+    const reviews = await getAllReviewFromDB({ ...filter });
 
     sendResponse(res, {
       success: true,
@@ -155,7 +155,7 @@ export const deleteReviewById = catchAsync(
       filter.reviewerId = user.id;
     }
 
-    await deleteReviewReviewFromDBById({ id, ...filter });
+    await deleteReviewFromDBById({ id, ...filter });
 
     sendResponse(res, {
       success: true,
