@@ -11,7 +11,7 @@ const router = Router({ mergeParams: true });
 
 router.use(protect);
 
-router.route("/").post(restrictTo("TENANT"), makePayment);
+router.route("/").post(restrictTo("TENANT", "LANDLORD", "ADMIN"), makePayment);
 router.route("/:sessionId").get(getSession);
 
 router
