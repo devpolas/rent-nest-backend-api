@@ -22,8 +22,7 @@ https://github.com/devpolas/rent-nest-backend-api.git
 
 ## Live API
 
-[https://rent-nest-backend-api.vercel.app
-](https://renttnest-api.vercel.app)
+https://renttnest-api.vercel.app
 
 ## ERD Diagram
 
