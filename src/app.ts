@@ -1,6 +1,5 @@
 import express from "express";
 import type { Application, Request, Response } from "express";
-import { express as useragent } from "express-useragent";
 import cors from "cors";
 import { authRouter } from "./modules/auth/auth.routes";
 import globalErrorController from "./middlewares/error";
@@ -24,7 +23,6 @@ import { propertyImageRouter } from "./modules/property-images/property-image.ro
 const app: Application = express();
 
 app.use(express.json());
-app.use(useragent());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: config.app_urls, credentials: true }));
 app.use(cookieParser());
