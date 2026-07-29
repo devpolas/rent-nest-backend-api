@@ -1,10 +1,11 @@
 model Location {
   id String @id @default(uuid())
 
-  latitude  String?  @db.Text
+  latitude  String? @db.Text
   longitude String? @db.Text
 
   type LocationType
+
   country    String
   division   String
   district   String
@@ -14,19 +15,28 @@ model Location {
 
   addressLine String? @db.Text
 
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  profileId String?
+  profile Profile? @relation(fields: [profileId],references: [id],onDelete: Cascade)
+
 
   property Property?
 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+
+  @@index([type])
 
   @@index([country])
   @@index([division])
   @@index([district])
   @@index([city])
   @@index([postalCode])
+
+  @@index([country,division,district,city])
+
   @@index([profileId])
 
   @@map("locations")
