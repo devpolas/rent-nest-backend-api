@@ -8,7 +8,10 @@ model Users {
   phone String? @db.VarChar(20)
   avatar String? @db.Text
 
+    // Email verification
   emailVerified Boolean @default(false)
+  emailVerificationToken String? @unique
+  emailVerificationExpires DateTime?
 
   // Password reset
   passwordResetToken String? @unique

@@ -263,6 +263,8 @@ CREATE TABLE "users" (
     "phone" VARCHAR(20),
     "avatar" TEXT,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "emailVerificationToken" TEXT,
+    "emailVerificationExpires" TIMESTAMP(3),
     "passwordResetToken" TEXT,
     "passwordResetExpires" TIMESTAMP(3),
     "role" "UserRole" NOT NULL DEFAULT 'TENANT',
@@ -473,6 +475,9 @@ CREATE UNIQUE INDEX "social_profile_platform_profileId_key" ON "social_profile"(
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_emailVerificationToken_key" ON "users"("emailVerificationToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_passwordResetToken_key" ON "users"("passwordResetToken");
