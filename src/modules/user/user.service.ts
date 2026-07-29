@@ -13,7 +13,13 @@ export const getUserByIdFromDB = async (id: string) => {
       password: true,
     },
     include: {
-      profile: true,
+      profile: {
+        include: {
+          location: true,
+          socialProfile: true,
+        },
+      },
+      sessions: true,
     },
   });
 
