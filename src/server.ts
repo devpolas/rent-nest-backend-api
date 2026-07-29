@@ -1,5 +1,6 @@
 import app from "./app";
 import config from "./config";
+import { startSessionCleanupJob } from "./jobs/session.cleanup";
 import prisma from "./lib/prisma";
 
 prisma
@@ -13,6 +14,7 @@ prisma
 
 const server = app.listen(config.port, () => {
   console.log(`Server is running on PORT ${config.port}`);
+  startSessionCleanupJob();
 });
 
 process.on("unhandledRejection", (err: any) => {
