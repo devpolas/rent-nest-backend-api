@@ -9,6 +9,7 @@ import {
   resetUserPassword,
   logout,
   logoutAllOtherDevices,
+  logoutSingleDevice,
 } from "./auth.controller";
 
 import { getMe } from "../user/user.controller";
@@ -33,6 +34,7 @@ router.use(protect);
 // Current logged-in user
 router.get("/me", getMe);
 router.post("/logout", logout);
+router.delete("/sessions/:sessionId", protect, logoutSingleDevice);
 router.post("/logout-other-devices", protect, logoutAllOtherDevices);
 
 export const authRouter = router;
