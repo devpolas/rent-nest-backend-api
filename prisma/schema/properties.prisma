@@ -17,8 +17,8 @@ model Property {
   availability     AvailabilityStatus @default(AVAILABLE)
   status           PropertyStatus @default(PENDING)
 
-  locationId String @unique
-  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String? @unique
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   landlordId String
   landlord User @relation(fields: [landlordId],references: [id], onDelete: Cascade)
