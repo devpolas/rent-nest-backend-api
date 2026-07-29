@@ -24,13 +24,12 @@ export const createPropertyIntoDB = async ({
     area,
     availableFrom,
     availability,
-    status,
     images,
     categoryId,
+    locationId,
     amenities,
     features,
     rules,
-    location,
   } = property;
 
   const landlordId = "landlordId" in property ? property.landlordId : undefined;
@@ -42,29 +41,31 @@ export const createPropertyIntoDB = async ({
     );
   }
 
-  const {
-    latitude,
-    longitude,
-    type = "PROPERTY",
-    country,
-    division,
-    district,
-    city,
-    village,
-    postalCode,
-    addressLine,
-  } = location;
+  if (locationId) {
+    const location = await prisma.location.findUnique({
+      where: {
+        id: locationId,
+      },
+    });
 
-  const slug = slugify(title);
+    if (!location) {
+      throw new AppError("Location not found", httpStatus.NOT_FOUND);
+    }
+  }
 
-  const exitsProperty = await prisma.property.findUnique({
+  const slug = slugify(title, {
+    lower: true,
+    strict: true,
+  });
+
+  const existsProperty = await prisma.property.findUnique({
     where: {
       slug,
     },
   });
 
-  if (exitsProperty) {
-    throw new AppError("Property already exits", httpStatus.BAD_REQUEST);
+  if (existsProperty) {
+    throw new AppError("Property already exists", httpStatus.BAD_REQUEST);
   }
 
   const propertyPayload = {
@@ -77,55 +78,21 @@ export const createPropertyIntoDB = async ({
     bathrooms,
     area,
 
-    ...(availableFrom !== undefined && { availableFrom }),
-    ...(availability !== undefined && { availability }),
-    ...(status !== undefined && { status }),
-  };
+    ...(availableFrom !== undefined && {
+      availableFrom,
+    }),
 
-  const locationPayload = {
-    type,
-    country,
-    division,
-    district,
-    city,
-    village,
-    postalCode,
-    ...(latitude !== undefined && {
-      latitude,
+    ...(availability !== undefined && {
+      availability,
     }),
-    ...(longitude !== undefined && {
-      longitude,
-    }),
-    ...(addressLine !== undefined && {
-      addressLine,
-    }),
+
+    ...("status" in property &&
+      property.status !== undefined && {
+        status: property.status,
+      }),
   };
 
   await prisma.$transaction(async (tx) => {
-    const profile = await tx.profile.findUnique({
-      where: {
-        userId: landlordId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!profile) {
-      throw new AppError("Profile not found", httpStatus.NOT_FOUND);
-    }
-
-    const propertyLocation = await tx.location.create({
-      data: {
-        ...locationPayload,
-        profile: {
-          connect: {
-            id: profile.id,
-          },
-        },
-      },
-    });
-
     const createdProperty = await tx.property.create({
       data: {
         ...propertyPayload,
@@ -142,16 +109,18 @@ export const createPropertyIntoDB = async ({
           },
         },
 
+        ...(locationId && {
+          location: {
+            connect: {
+              id: locationId,
+            },
+          },
+        }),
+
         images: {
           create: images.map((url) => ({
             url,
           })),
-        },
-
-        location: {
-          connect: {
-            id: propertyLocation.id,
-          },
         },
       },
     });
@@ -162,12 +131,14 @@ export const createPropertyIntoDB = async ({
         featureId,
       })),
     });
+
     await tx.propertyAmenities.createMany({
       data: amenities.map((amenityId) => ({
         propertyId: createdProperty.id,
         amenityId,
       })),
     });
+
     await tx.propertyRules.createMany({
       data: rules.map((ruleId) => ({
         propertyId: createdProperty.id,
@@ -176,13 +147,17 @@ export const createPropertyIntoDB = async ({
     });
   });
 
-  const createdProperty = await prisma.property.findUnique({
+  return prisma.property.findUnique({
     where: {
       slug,
     },
+    include: {
+      images: true,
+      amenities: true,
+      category: true,
+      rules: true,
+    },
   });
-
-  return createdProperty;
 };
 
 export const updatePropertyIntoDB = async ({
@@ -197,9 +172,6 @@ export const updatePropertyIntoDB = async ({
   const existingProperty = await prisma.property.findUnique({
     where: {
       id,
-    },
-    include: {
-      location: true,
     },
   });
 
@@ -230,8 +202,22 @@ export const updatePropertyIntoDB = async ({
       ? property.landlordId
       : undefined;
 
+  if (property.locationId) {
+    const location = await prisma.location.findUnique({
+      where: {
+        id: property.locationId,
+      },
+    });
+
+    if (!location) {
+      throw new AppError("Location not found", httpStatus.NOT_FOUND);
+    }
+  }
+
   const propertyPayload = {
-    ...(property.title !== undefined && { title: property.title }),
+    ...(property.title !== undefined && {
+      title: property.title,
+    }),
 
     ...(property.description !== undefined && {
       description: property.description,
@@ -265,70 +251,28 @@ export const updatePropertyIntoDB = async ({
       availability: property.availability,
     }),
 
-    ...(property.status !== undefined && {
-      status: property.status,
-    }),
-  };
-
-  const locationPayload = {
-    ...(property.location?.country !== undefined && {
-      country: property.location.country,
-    }),
-
-    ...(property.location?.division !== undefined && {
-      division: property.location.division,
-    }),
-
-    ...(property.location?.district !== undefined && {
-      district: property.location.district,
-    }),
-
-    ...(property.location?.city !== undefined && {
-      city: property.location.city,
-    }),
-
-    ...(property.location?.village !== undefined && {
-      village: property.location.village,
-    }),
-
-    ...(property.location?.postalCode !== undefined && {
-      postalCode: property.location.postalCode,
-    }),
-
-    ...(property.location?.latitude !== undefined && {
-      latitude: property.location.latitude,
-    }),
-
-    ...(property.location?.longitude !== undefined && {
-      longitude: property.location.longitude,
-    }),
-
-    ...(property.location?.addressLine !== undefined && {
-      addressLine: property.location.addressLine,
-    }),
+    ...("status" in property &&
+      property.status !== undefined && {
+        status: property.status,
+      }),
   };
 
   await prisma.$transaction(async (tx) => {
-    // Update location
-    if (
-      Object.keys(locationPayload).length > 0 &&
-      existingProperty.locationId
-    ) {
-      await tx.location.update({
-        where: {
-          id: existingProperty.locationId,
-        },
-        data: locationPayload,
-      });
-    }
-
-    // Update property
     await tx.property.update({
       where: {
         id,
       },
+
       data: {
         ...propertyPayload,
+
+        ...(property.locationId && {
+          location: {
+            connect: {
+              id: property.locationId,
+            },
+          },
+        }),
 
         ...(newLandlordId && {
           landlord: {
@@ -348,7 +292,6 @@ export const updatePropertyIntoDB = async ({
       },
     });
 
-    // Replace images
     if (property.images) {
       await tx.propertyImage.deleteMany({
         where: {
@@ -364,7 +307,6 @@ export const updatePropertyIntoDB = async ({
       });
     }
 
-    // Replace amenities
     if (property.amenities) {
       await tx.propertyAmenities.deleteMany({
         where: {
@@ -380,7 +322,6 @@ export const updatePropertyIntoDB = async ({
       });
     }
 
-    // Replace features
     if (property.features) {
       await tx.propertyFeatures.deleteMany({
         where: {
@@ -396,7 +337,6 @@ export const updatePropertyIntoDB = async ({
       });
     }
 
-    // Replace rules
     if (property.rules) {
       await tx.propertyRules.deleteMany({
         where: {
@@ -413,13 +353,17 @@ export const updatePropertyIntoDB = async ({
     }
   });
 
-  const updatedProperty = await prisma.property.findUnique({
+  return prisma.property.findUnique({
     where: {
       id,
     },
+    include: {
+      images: true,
+      amenities: true,
+      category: true,
+      rules: true,
+    },
   });
-
-  return updatedProperty;
 };
 
 export const getAllPropertiesFromDB = async ({
@@ -429,6 +373,12 @@ export const getAllPropertiesFromDB = async ({
 }) => {
   const properties = await prisma.property.findMany({
     where: { ...(landlordId && { landlordId }) },
+    include: {
+      images: true,
+      amenities: true,
+      category: true,
+      rules: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -439,6 +389,12 @@ export const getPropertyByIdFromDB = async (id: string) => {
   const property = await prisma.property.findUnique({
     where: {
       id,
+    },
+    include: {
+      images: true,
+      amenities: true,
+      category: true,
+      rules: true,
     },
   });
 
@@ -473,6 +429,12 @@ export const deletePropertyFromDB = async ({
   await prisma.property.delete({
     where: {
       id,
+    },
+    include: {
+      images: true,
+      amenities: true,
+      category: true,
+      rules: true,
     },
   });
 };
