@@ -1,16 +1,30 @@
 import type { NextFunction, Request, Response } from "express";
+import httpStatus from "http-status";
+
 import { catchAsync } from "../../utils/catchAsync";
-import { SigninSchema, SignupSchema } from "./auth.schema";
+import { AppError } from "../../utils/appError";
+import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
+import { Time } from "../../utils/timeHelper";
+
+import {
+  SignupSchema,
+  SigninSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+  VerifyEmailSchema,
+} from "./auth.schema";
+
 import {
   createUser,
   checkUserCredentials,
   createAccessToken,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
+  sendVerification,
 } from "./auth.service";
-import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
-import { Time } from "../../utils/timeHelper";
-import httpStatus from "http-status";
-import { AppError } from "../../utils/appError";
 
+// Signup
 export const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const body = SignupSchema.parse(req.body);
@@ -20,7 +34,8 @@ export const signup = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
-      message: "user signup successfully",
+      message:
+        "Account created successfully. Please verify your email address.",
       data: {
         user,
       },
@@ -28,6 +43,7 @@ export const signup = catchAsync(
   },
 );
 
+// Signin
 export const signin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const body = SigninSchema.parse(req.body);
@@ -49,7 +65,7 @@ export const signin = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
-      message: "user login successfully",
+      message: "Login successful",
       data: {
         accessToken,
       },
@@ -57,15 +73,16 @@ export const signin = catchAsync(
   },
 );
 
+// Refresh Token
 export const refreshToken = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.cookies.refreshToken;
+    const token = req.cookies.refreshToken;
 
-    if (!refreshToken) {
+    if (!token) {
       throw new AppError("Refresh token not found", httpStatus.UNAUTHORIZED);
     }
 
-    const accessToken = await createAccessToken(refreshToken);
+    const accessToken = await createAccessToken(token);
 
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
@@ -80,6 +97,66 @@ export const refreshToken = catchAsync(
       data: {
         accessToken,
       },
+    });
+  },
+);
+
+// Verify Email
+export const verifyUserEmail = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email, token } = VerifyEmailSchema.parse(req.query);
+
+    const result = await verifyEmail(email, token);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: result.message,
+    });
+  },
+);
+
+// Resend Verification Email
+export const resendVerificationEmail = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email } = req.body as { email: string };
+
+    await sendVerification(email);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Verification email sent successfully",
+    });
+  },
+);
+
+// Forgot Password
+export const forgotUserPassword = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email } = ForgotPasswordSchema.parse(req.body);
+
+    const result = await forgotPassword(email);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: result.message,
+    });
+  },
+);
+
+// Reset Password
+export const resetUserPassword = catchAsync(
+  async (req: Request, res: Response) => {
+    const { token, password } = ResetPasswordSchema.parse(req.body);
+
+    const result = await resetPassword(token, password);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: result.message,
     });
   },
 );
