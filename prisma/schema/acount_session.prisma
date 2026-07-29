@@ -2,7 +2,7 @@ model AccountSession {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+  user Users @relation(fields: [userId],references: [id],onDelete: Cascade)
 
   refreshTokenHash String @unique
 

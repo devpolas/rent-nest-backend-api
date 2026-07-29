@@ -1,31 +1,42 @@
-model User {
+model Users {
   id  String @id @default(uuid())
+
   name String @db.VarChar(255)
-  email String  @db.VarChar(255) @unique
+  email String @db.VarChar(255) @unique
   password String @db.Text
+
   phone String? @db.VarChar(20)
   avatar String? @db.Text
+
   emailVerified Boolean @default(false)
+
+  // Password reset
+  passwordResetToken String? @unique
+  passwordResetExpires DateTime?
+
   role UserRole @default(TENANT)
-  status  UserStatus @default(ACTIVE)
+  status UserStatus @default(ACTIVE)
 
   sessions AccountSession[]
 
   profile Profile?
+
   property Property[]
+
   tenantPayments Payment[] @relation("tenant")
   landlordPayments Payment[] @relation("landlord")
-  
+
   tenantRentalRequests RentalRequests[] @relation("tenant")
   landlordRentalRequests RentalRequests[] @relation("landlord")
+
   reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([name])
-  @@index([ email])
-  @@index([ phone])
+  @@index([email])
+  @@index([phone])
 
   @@map("users")
 }

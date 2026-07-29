@@ -21,7 +21,7 @@ model Property {
   location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   landlordId String
-  landlord User @relation(fields: [landlordId],references: [id], onDelete: Cascade)
+  landlord Users @relation(fields: [landlordId],references: [id], onDelete: Cascade)
 
   categoryId String
   category PropertyCategory @relation(fields: [categoryId],references: [id], onDelete: Cascade)
