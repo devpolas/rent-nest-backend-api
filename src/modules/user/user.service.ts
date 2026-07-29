@@ -1,9 +1,10 @@
 import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
-import type { AdminUserInputType } from "./user.schema";
+import type { AdminUserInputType, UserUpdateInputType } from "./user.schema";
 
-export const getProfileFromDB = async (id: string) => {
+// Get single user
+export const getUserByIdFromDB = async (id: string) => {
   const user = await prisma.user.findUnique({
     where: {
       id,
@@ -11,66 +12,8 @@ export const getProfileFromDB = async (id: string) => {
     omit: {
       password: true,
     },
-  });
-
-  if (!user) {
-    throw new AppError("user doesn't exits", httpStatus.NOT_FOUND);
-  }
-
-  return user;
-};
-
-export const getAllUsersFromDB = async () => {
-  const user = await prisma.user.findMany({
-    where: {},
-    omit: {
-      password: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  if (!user) {
-    throw new AppError("user doesn't exits", httpStatus.NOT_FOUND);
-  }
-
-  return user;
-};
-
-export const updateUserIntoDB = async (
-  id: string,
-  payload: AdminUserInputType,
-) => {
-  const { avatar, name, status, role, phone, profile } = payload;
-
-  const profileImage = profile?.profileImage;
-  const bio = profile?.bio;
-  const birthdate = profile?.birthdate;
-  const socialProfiles = profile?.socialProfiles;
-  const locations = profile?.locations;
-
-  const userData = {
-    ...(name !== undefined && { name }),
-    ...(avatar !== undefined && { avatar }),
-    ...(phone !== undefined && { phone }),
-    ...(role !== undefined && { role }),
-    ...(status !== undefined && { status }),
-  };
-
-  const profileData = {
-    ...(profileImage !== undefined && { profileImage }),
-    ...(bio !== undefined && { bio }),
-    ...(birthdate !== undefined && { birthdate }),
-  };
-
-  const user = await prisma.user.findUnique({
-    where: { id },
     include: {
-      profile: {
-        include: {
-          socialProfile: true,
-          location: true,
-        },
-      },
+      profile: true,
     },
   });
 
@@ -78,93 +21,87 @@ export const updateUserIntoDB = async (
     throw new AppError("User doesn't exist", httpStatus.NOT_FOUND);
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: {
-        id: user.id,
-      },
-      data: userData,
-    });
+  return user;
+};
 
-    await tx.profile.upsert({
-      where: {
-        userId: user.id,
-      },
-      update: profileData,
-
-      create: {
-        userId: user.id,
-        ...profileData,
-      },
-    });
-
-    if (socialProfiles && user.profile) {
-      for (const social of socialProfiles) {
-        await tx.socialProfile.upsert({
-          where: {
-            platform_profileId: {
-              profileId: user.profile.id,
-              platform: social.platform,
-            },
-          },
-          update: {
-            url: social.url,
-          },
-          create: {
-            profileId: user.profile.id,
-            platform: social.platform,
-            url: social.url,
-          },
-        });
-      }
-    }
-
-    if (locations && user.profile) {
-      for (const location of locations) {
-        const locationData = {
-          type: location.type,
-          country: location.country,
-          division: location.division,
-          district: location.district,
-          city: location.city,
-          village: location.village,
-          postalCode: location.postalCode,
-
-          ...(location.latitude !== undefined && {
-            latitude: location.latitude,
-          }),
-
-          ...(location.longitude !== undefined && {
-            longitude: location.longitude,
-          }),
-
-          ...(location.addressLine !== undefined && {
-            addressLine: location.addressLine,
-          }),
-        };
-        await tx.location.upsert({
-          where: {
-            id,
-          },
-
-          update: locationData,
-
-          create: {
-            profileId: user.profile.id,
-            ...locationData,
-          },
-        });
-      }
-    }
+// Get all users
+export const getAllUsersFromDB = async () => {
+  const users = await prisma.user.findMany({
+    omit: {
+      password: true,
+    },
+    include: {
+      profile: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  const updatedUser = prisma.user.findUnique({
-    where: { id },
+  return users;
+};
+
+// Update user
+export const updateUserIntoDB = async (
+  id: string,
+  payload: UserUpdateInputType | AdminUserInputType,
+) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!existingUser) {
+    throw new AppError("User doesn't exist", httpStatus.NOT_FOUND);
+  }
+
+  const userData = {
+    ...(payload.name !== undefined && {
+      name: payload.name,
+    }),
+
+    ...(payload.phone !== undefined && {
+      phone: payload.phone,
+    }),
+
+    ...(payload.avatar !== undefined && {
+      avatar: payload.avatar,
+    }),
+
+    ...("role" in payload &&
+      payload.role !== undefined && {
+        role: payload.role,
+      }),
+
+    ...("status" in payload &&
+      payload.status !== undefined && {
+        status: payload.status,
+      }),
+  };
+
+  await prisma.user.update({
+    where: {
+      id,
+    },
+
+    data: userData,
+  });
+
+  const updatedUser = await prisma.user.findUnique({
+    where: {
+      id,
+    },
+
+    omit: {
+      password: true,
+    },
   });
 
   return updatedUser;
 };
 
+// Delete user
 export const deleteUserFromDB = async (id: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -173,8 +110,14 @@ export const deleteUserFromDB = async (id: string) => {
   });
 
   if (!user) {
-    throw new AppError("user doesn't exits", httpStatus.NOT_FOUND);
+    throw new AppError("User doesn't exist", httpStatus.NOT_FOUND);
   }
 
-  await prisma.user.delete({ where: { id } });
+  await prisma.user.delete({
+    where: {
+      id,
+    },
+  });
+
+  return null;
 };

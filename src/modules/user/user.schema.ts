@@ -1,69 +1,43 @@
 import { z } from "zod";
 
-export const UserSchema = z.object({
-  name: z.string().optional(),
-  phone: z.string().optional(),
-  avatar: z.url().optional(),
-  role: z.enum(["TENANT", "LANDLORD", "MODERATOR", "ADMIN"]).optional(),
-  status: z.enum(["ACTIVE", "DEACTIVATE", "BLOCKED", "BANNED"]).optional(),
-});
+// User enum
 
-export const UserProfileSchema = z.object({
-  profileImage: z.url().optional(),
-  bio: z.string().optional(),
-  birthdate: z.date().optional(),
-});
-
-export const SocialPlatformEnum = z.enum([
-  "GITHUB",
-  "LINKEDIN",
-  "FACEBOOK",
-  "TWITTER",
-  "INSTAGRAM",
-  "YOUTUBE",
-  "DISCORD",
-  "TELEGRAM",
-  "WHATSAPP",
-  "WEBSITE",
+export const UserRoleEnum = z.enum([
+  "TENANT",
+  "LANDLORD",
+  "MODERATOR",
+  "ADMIN",
 ]);
 
-export const SocialProfileSchema = z.object({
-  platform: SocialPlatformEnum,
-  url: z.url(),
+export const UserStatusEnum = z.enum([
+  "ACTIVE",
+  "DEACTIVATE",
+  "BLOCKED",
+  "BANNED",
+]);
+
+// Create / Update User
+
+export const UserSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
+
+  phone: z.string().optional(),
+
+  avatar: z.url().optional(),
 });
 
-export const LocationSchema = z.object({
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
+export const UserUpdateSchema = UserSchema.partial();
 
-  type: z.enum(["HOME", "CURRENT", "WORK"]),
+// Admin fields
 
-  country: z.string().min(1),
-  division: z.string().min(1),
-  district: z.string().min(1),
-  city: z.string().min(1),
-  village: z.string().min(1),
-  postalCode: z.string().min(1),
+export const AdminUserSchema = UserSchema.extend({
+  role: UserRoleEnum.optional(),
 
-  addressLine: z.string().optional(),
+  status: UserStatusEnum.optional(),
 });
 
-export const CompleteUserSchema = UserSchema.extend({
-  profile: UserProfileSchema.extend({
-    locations: z.array(LocationSchema).optional(),
-    socialProfiles: z.array(SocialProfileSchema).optional(),
-  }),
-});
+export type UserInputType = z.infer<typeof UserSchema>;
 
-export const AdminFieldsSchema = z.object({
-  role: z.enum(["TENANT", "LANDLORD", "MODERATOR", "ADMIN"]).optional(),
+export type UserUpdateInputType = z.infer<typeof UserUpdateSchema>;
 
-  status: z.enum(["ACTIVE", "DEACTIVATE", "BLOCKED", "BANNED"]).optional(),
-});
-
-export const AdminUserSchema = CompleteUserSchema.extend({
-  ...AdminFieldsSchema.shape,
-});
-
-export type UserInputType = z.input<typeof CompleteUserSchema>;
-export type AdminUserInputType = z.input<typeof AdminUserSchema>;
+export type AdminUserInputType = z.infer<typeof AdminUserSchema>;
