@@ -9,6 +9,8 @@ model User {
   role UserRole @default(TENANT)
   status  UserStatus @default(ACTIVE)
 
+  sessions AccountSession[]
+
   profile Profile?
   property Property[]
   tenantPayments Payment[] @relation("tenant")

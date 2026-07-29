@@ -1,0 +1,32 @@
+model AccountSession {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  refreshTokenHash String @unique
+
+  // Device Information
+  browser String?
+  operatingSystem String?
+  deviceType String?
+
+  // Network Information
+  ipAddress String?
+  userAgent String?
+
+  // Session Control
+  isRevoked Boolean @default(false)
+  revokedAt DateTime?
+
+  expiresAt DateTime
+  lastUsedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  
+  @@map("account_session")
+}
