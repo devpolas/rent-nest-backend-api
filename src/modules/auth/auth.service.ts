@@ -107,6 +107,29 @@ export const sendVerification = async (email: string) => {
   });
 };
 
+export const logoutUser = async (refreshToken: string) => {
+  if (!refreshToken) {
+    throw new AppError("Refresh token not found", httpStatus.UNAUTHORIZED);
+  }
+
+  const hashedToken = hashToken(refreshToken);
+
+  await prisma.accountSession.updateMany({
+    where: {
+      refreshTokenHash: hashedToken,
+      isRevoked: false,
+    },
+    data: {
+      isRevoked: true,
+      revokedAt: new Date(),
+    },
+  });
+
+  return {
+    message: "Logged out successfully",
+  };
+};
+
 //signup
 export const createUser = async (payload: SignupPayload) => {
   const { name, email, password, role } = payload;
@@ -196,19 +219,32 @@ export const checkUserCredentials = async (
   const accessToken = createJWT(jwtPayload, "accessToken");
   const refreshToken = createJWT(jwtPayload, "refreshToken");
 
-  await prisma.accountSession.create({
-    data: {
-      userId: user.id,
-      refreshTokenHash: hashToken(refreshToken),
-      browser: session.browser,
-      operatingSystem: session.operatingSystem,
-      deviceType: session.deviceType,
-      ipAddress: session.ipAddress,
-      userAgent: session.userAgent,
+  await prisma.$transaction([
+    prisma.accountSession.deleteMany({
+      where: {
+        userId: user.id,
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+    }),
 
-      expiresAt: new Date(Date.now() + Time.day(30)),
-    },
-  });
+    prisma.accountSession.create({
+      data: {
+        userId: user.id,
+        refreshTokenHash: hashToken(refreshToken),
+
+        browser: session.browser,
+        operatingSystem: session.operatingSystem,
+        deviceType: session.deviceType,
+
+        ipAddress: session.ipAddress,
+        userAgent: session.userAgent,
+
+        expiresAt: new Date(Date.now() + Time.day(30)),
+      },
+    }),
+  ]);
 
   return { accessToken, refreshToken };
 };
@@ -361,34 +397,48 @@ export const resetPassword = async (token: string, password: string) => {
   };
 };
 
-export const createAccessToken = async (token: string) => {
-  if (!token) {
-    throw new AppError("login first", httpStatus.UNAUTHORIZED);
+export const createAccessToken = async (refreshToken: string) => {
+  if (!refreshToken) {
+    throw new AppError("Refresh token missing", httpStatus.UNAUTHORIZED);
   }
-  const decode = verifyToken(token, "refreshToken");
-  const { id } = decode as JwtPayload;
 
-  const user = await prisma.users.findUnique({
+  const hashedRefreshToken = hashToken(refreshToken);
+
+  const session = await prisma.accountSession.findUnique({
     where: {
-      id,
+      refreshTokenHash: hashedRefreshToken,
+    },
+
+    include: {
+      user: true,
     },
   });
 
-  if (!user) {
-    throw new AppError("create account first", httpStatus.UNAUTHORIZED);
+  if (!session) {
+    throw new AppError(
+      "Session expired. Please login again.",
+      httpStatus.UNAUTHORIZED,
+    );
   }
 
-  if (user.status === "BLOCKED") {
+  if (session.isRevoked) {
     throw new AppError(
-      "Your account has been blocked. Please contact support.",
-      httpStatus.FORBIDDEN,
+      "Session revoked. Please login again.",
+      httpStatus.UNAUTHORIZED,
     );
   }
-  if (user.status === "BANNED") {
+
+  if (session.expiresAt < new Date()) {
     throw new AppError(
-      "Your account has been banned. Please contact support.",
-      httpStatus.FORBIDDEN,
+      "Session expired. Please login again.",
+      httpStatus.UNAUTHORIZED,
     );
+  }
+
+  const user = session.user;
+
+  if (user.status !== "ACTIVE") {
+    throw new AppError("Account is not active.", httpStatus.FORBIDDEN);
   }
 
   const jwtPayload = {
@@ -400,28 +450,15 @@ export const createAccessToken = async (token: string) => {
 
   const accessToken = createJWT(jwtPayload, "accessToken");
 
-  return accessToken;
-};
-
-export const logoutUser = async (refreshToken: string) => {
-  if (!refreshToken) {
-    throw new AppError("Refresh token not found", httpStatus.UNAUTHORIZED);
-  }
-
-  const hashedToken = hashToken(refreshToken);
-
-  await prisma.accountSession.updateMany({
+  await prisma.accountSession.update({
     where: {
-      refreshTokenHash: hashedToken,
-      isRevoked: false,
+      id: session.id,
     },
+
     data: {
-      isRevoked: true,
-      revokedAt: new Date(),
+      lastUsedAt: new Date(),
     },
   });
 
-  return {
-    message: "Logged out successfully",
-  };
+  return accessToken;
 };
