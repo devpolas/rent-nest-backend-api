@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
-
 import { catchAsync } from "../../utils/catchAsync";
 import { AppError } from "../../utils/appError";
 import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
@@ -22,7 +21,14 @@ import {
   resetPassword,
   verifyEmail,
   sendVerification,
+  logoutUser,
+  logoutOtherDevices,
+  logoutDevice,
 } from "./auth.service";
+import {
+  extractSessionInfo,
+  type ExtractedSessionInfo,
+} from "../../utils/sessionHelper";
 
 // Signup
 export const signup = catchAsync(
@@ -48,7 +54,12 @@ export const signin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const body = SigninSchema.parse(req.body);
 
-    const { accessToken, refreshToken } = await checkUserCredentials(body);
+    const systemInfo: ExtractedSessionInfo = extractSessionInfo(req);
+
+    const { accessToken, refreshToken } = await checkUserCredentials(
+      body,
+      systemInfo,
+    );
 
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
@@ -160,3 +171,51 @@ export const resetUserPassword = catchAsync(
     });
   },
 );
+
+export const logout = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  await logoutUser(refreshToken);
+
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Logout successful",
+  });
+});
+
+export const logoutSingleDevice = catchAsync(
+  async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+    }
+
+    const sessionId = req.params.sessionId as string;
+
+    const result = await logoutDevice(req.user.id, sessionId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: result.message,
+    });
+  },
+);
+
+export const logoutAllOtherDevices = catchAsync(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!req.user) {
+    throw new AppError("UNAUTHORIZED", httpStatus.UNAUTHORIZED);
+  }
+
+  await logoutOtherDevices(req.user.id, refreshToken);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Other devices logged out",
+  });
+});

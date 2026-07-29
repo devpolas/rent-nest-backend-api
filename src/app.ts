@@ -22,6 +22,7 @@ import { propertyImageRouter } from "./modules/property-images/property-image.ro
 
 const app: Application = express();
 
+app.set("trust proxy", true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: config.app_urls, credentials: true }));
