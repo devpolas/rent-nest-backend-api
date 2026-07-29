@@ -15,4 +15,9 @@ export default {
   jwt_refresh_expire_in: process.env.JWT_REFRESH_EXPIRES_IN as StringValue,
   stripe_secret: process.env.STRIPE_SECRET as StringValue,
   website_url: process.env.WEBSITE_URL as StringValue,
+  nodemailer_user: process.env.NODEMAILER_USER,
+  nodemailer_app_password: process.env.NODEMAILER_APP_PASSWORD,
+  nodemailer_service: process.env.NODEMAILER_SERVICE,
+  nodemailer_smtp_host: process.env.SMTP_HOST,
+  nodemailer_smtp_port: process.env.SMTP_PORT,
 };
