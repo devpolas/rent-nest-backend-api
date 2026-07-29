@@ -5,85 +5,85 @@ const emailTemplate = ({
   title,
   description,
   link,
+  actionText = "Continue",
 }: {
   title: string;
   description: string;
   link?: string;
+  actionText?: string;
 }) => {
   return `
   <!DOCTYPE html>
   <html>
-  <body>
+    <body>
+      <div style="
+        max-width:500px;
+        margin:20px auto;
+        padding:25px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        font-family:Arial,sans-serif;
+      ">
 
-  <div style="
-    max-width:500px;
-    margin:20px auto;
-    padding:25px;
-    border:1px solid #ddd;
-    border-radius:8px;
-    font-family:Arial,sans-serif;
-  ">
-
-    <h2 style="
-      color:#222;
-      margin-bottom:15px;
-    ">
-      ${title}
-    </h2>
-
-
-    <p style="
-      font-size:16px;
-      color:#444;
-      line-height:1.6;
-    ">
-      ${description}
-    </p>
+        <h2 style="
+          color:#222;
+          margin-bottom:15px;
+        ">
+          ${title}
+        </h2>
 
 
-    ${
-      link
-        ? `
-        <a 
-          href="${link}"
-          style="
-            display:inline-block;
-            margin-top:20px;
-            padding:12px 18px;
-            background:#2563eb;
-            color:#ffffff;
-            text-decoration:none;
-            border-radius:6px;
-            font-size:15px;
-          "
-        >
-          Reset Password
-        </a>
-        `
-        : ""
-    }
+        <p style="
+          font-size:16px;
+          color:#444;
+          line-height:1.6;
+        ">
+          ${description}
+        </p>
 
 
-    <p style="
-      margin-top:30px;
-      font-size:13px;
-      color:#777;
-    ">
-      If you did not request this email, you can safely ignore it.
-    </p>
+        ${
+          link
+            ? `
+            <a
+              href="${link}"
+              style="
+                display:inline-block;
+                margin-top:20px;
+                padding:12px 18px;
+                background:#2563eb;
+                color:#ffffff;
+                text-decoration:none;
+                border-radius:6px;
+                font-size:15px;
+              "
+            >
+              ${actionText}
+            </a>
+            `
+            : ""
+        }
 
 
-    <p style="
-      font-size:13px;
-      color:#999;
-    ">
-      © ${new Date().getFullYear()} Rent Nest
-    </p>
+        <p style="
+          margin-top:30px;
+          font-size:13px;
+          color:#777;
+        ">
+          If you did not request this action, you can safely ignore this email.
+          Your account will remain secure.
+        </p>
 
 
-  </div>
+        <p style="
+          font-size:13px;
+          color:#999;
+        ">
+          © ${new Date().getFullYear()} Rent Nest
+        </p>
 
-  </body>
+      </div>
+    </body>
   </html>
   `;
 };
@@ -94,23 +94,26 @@ export const sendEmail = async ({
   title,
   description,
   link,
+  actionText,
 }: {
   to: string;
   subject: string;
   title: string;
   description: string;
   link?: string;
+  actionText?: string;
 }) => {
   const html = emailTemplate({
     title,
     description,
     ...(link !== undefined && { link }),
+    ...(actionText !== undefined && { actionText }),
   });
 
   const mailOptions = {
     from: `"Rent Nest" <${config.nodemailer_user}>`,
     to,
-    subject,
+    subject: `Rent Nest - ${subject}`,
     html,
   };
 
