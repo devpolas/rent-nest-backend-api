@@ -5,11 +5,12 @@ model PropertyImage {
 
   url String @db.Text
   isThumbnail Boolean @default(false)
-  
+
   property Property @relation(fields: [propertyId],references: [id],onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([propertyId])
   @@map("property_images")
 }
