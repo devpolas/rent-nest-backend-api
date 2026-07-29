@@ -24,7 +24,6 @@ export const createPropertyIntoDB = async ({
     area,
     availableFrom,
     availability,
-    images,
     categoryId,
     locationId,
     amenities,
@@ -116,12 +115,6 @@ export const createPropertyIntoDB = async ({
             },
           },
         }),
-
-        images: {
-          create: images.map((url) => ({
-            url,
-          })),
-        },
       },
     });
 
@@ -291,21 +284,6 @@ export const updatePropertyIntoDB = async ({
         }),
       },
     });
-
-    if (property.images) {
-      await tx.propertyImage.deleteMany({
-        where: {
-          propertyId: id,
-        },
-      });
-
-      await tx.propertyImage.createMany({
-        data: property.images.map((url) => ({
-          propertyId: id,
-          url,
-        })),
-      });
-    }
 
     if (property.amenities) {
       await tx.propertyAmenities.deleteMany({

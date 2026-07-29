@@ -38,8 +38,6 @@ const PropertyBaseSchema = z.object({
 
   categoryId: z.uuid(),
 
-  images: z.array(z.url()).min(1),
-
   amenities: z.array(z.uuid()).min(1),
 
   features: z.array(z.uuid()).min(1),
