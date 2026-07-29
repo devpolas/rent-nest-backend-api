@@ -60,17 +60,6 @@ export const createReviewIntoDB = async ({
     where: {
       id: newReview.id,
     },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
   });
 
   return review;
@@ -117,17 +106,6 @@ export const updateReviewIntoDBById = async ({
     where: {
       id: updatedReview.id,
     },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
   });
 
   return review;
@@ -137,15 +115,6 @@ export const getReviewFromDBById = async (reviewId: string) => {
   const existingReview = await prisma.review.findUnique({
     where: {
       id: reviewId,
-    },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
     },
   });
 
@@ -167,17 +136,6 @@ export const getAllReviewFromDB = async ({
         tenantId: reviewerId,
       }),
     },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -187,17 +145,6 @@ export const getAllReviewFromDB = async ({
 export const getAllReviewFromDBByPropertyId = async (propertyId: string) => {
   const reviews = await prisma.review.findMany({
     where: { propertyId },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -213,17 +160,6 @@ export const deleteReviewFromDBById = async ({
 }) => {
   const existingReview = await prisma.review.findUnique({
     where: { id },
-    include: {
-      property: true,
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-        },
-      },
-    },
   });
 
   if (!existingReview) {

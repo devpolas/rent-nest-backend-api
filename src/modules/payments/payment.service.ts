@@ -281,15 +281,6 @@ export const getAllPaymentHistoryFromDB = async ({
         landlordId,
       }),
     },
-    include: {
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
 
     orderBy: {
       createdAt: "desc",
@@ -311,22 +302,6 @@ export const getPaymentHistoryByIdFromDB = async ({
   const paymentHistory = await prisma.payment.findUnique({
     where: {
       transactionId,
-    },
-    include: {
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      landlord: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
     },
   });
 

@@ -8,14 +8,6 @@ export const getProfileFromDB = async (id: string) => {
     where: {
       id,
     },
-    include: {
-      profile: {
-        include: {
-          location: true,
-          socialProfile: true,
-        },
-      },
-    },
     omit: {
       password: true,
     },
@@ -27,17 +19,10 @@ export const getProfileFromDB = async (id: string) => {
 
   return user;
 };
+
 export const getAllUsersFromDB = async () => {
   const user = await prisma.user.findMany({
     where: {},
-    include: {
-      profile: {
-        include: {
-          location: true,
-          socialProfile: true,
-        },
-      },
-    },
     omit: {
       password: true,
     },
@@ -175,14 +160,6 @@ export const updateUserIntoDB = async (
 
   const updatedUser = prisma.user.findUnique({
     where: { id },
-    include: {
-      profile: {
-        include: {
-          socialProfile: true,
-          location: true,
-        },
-      },
-    },
   });
 
   return updatedUser;

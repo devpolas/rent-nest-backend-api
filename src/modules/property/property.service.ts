@@ -180,33 +180,6 @@ export const createPropertyIntoDB = async ({
     where: {
       slug,
     },
-    include: {
-      images: true,
-      location: true,
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: { password: true },
-      },
-
-      category: true,
-      amenities: {
-        include: {
-          amenity: true,
-        },
-      },
-      features: {
-        include: {
-          feature: true,
-        },
-      },
-      rules: {
-        include: {
-          rule: true,
-        },
-      },
-    },
   });
 
   return createdProperty;
@@ -444,41 +417,6 @@ export const updatePropertyIntoDB = async ({
     where: {
       id,
     },
-
-    include: {
-      images: true,
-
-      location: true,
-
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-
-      category: true,
-
-      amenities: {
-        include: {
-          amenity: true,
-        },
-      },
-
-      features: {
-        include: {
-          feature: true,
-        },
-      },
-
-      rules: {
-        include: {
-          rule: true,
-        },
-      },
-    },
   });
 
   return updatedProperty;
@@ -491,33 +429,6 @@ export const getAllPropertiesFromDB = async ({
 }) => {
   const properties = await prisma.property.findMany({
     where: { ...(landlordId && { landlordId }) },
-    include: {
-      images: true,
-      location: true,
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: { password: true },
-      },
-
-      category: true,
-      amenities: {
-        include: {
-          amenity: true,
-        },
-      },
-      features: {
-        include: {
-          feature: true,
-        },
-      },
-      rules: {
-        include: {
-          rule: true,
-        },
-      },
-    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -528,33 +439,6 @@ export const getPropertyByIdFromDB = async (id: string) => {
   const property = await prisma.property.findUnique({
     where: {
       id,
-    },
-    include: {
-      images: true,
-      location: true,
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: { password: true },
-      },
-
-      category: true,
-      amenities: {
-        include: {
-          amenity: true,
-        },
-      },
-      features: {
-        include: {
-          feature: true,
-        },
-      },
-      rules: {
-        include: {
-          rule: true,
-        },
-      },
     },
   });
 

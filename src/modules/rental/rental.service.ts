@@ -69,45 +69,6 @@ export const createRentRequestIntoDB = async (
     where: {
       id: newRent.id,
     },
-    include: {
-      tenant: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      property: {
-        include: {
-          location: true,
-          images: true,
-          amenities: {
-            include: {
-              amenity: true,
-            },
-          },
-          features: {
-            include: {
-              feature: true,
-            },
-          },
-          rules: {
-            include: {
-              rule: true,
-            },
-          },
-        },
-      },
-    },
   });
 
   return rent;
@@ -167,45 +128,6 @@ export const updateRentRequestIntoDB = async ({
     where: {
       id: updatedRentRequest.id,
     },
-    include: {
-      tenant: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      property: {
-        include: {
-          location: true,
-          images: true,
-          amenities: {
-            include: {
-              amenity: true,
-            },
-          },
-          features: {
-            include: {
-              feature: true,
-            },
-          },
-          rules: {
-            include: {
-              rule: true,
-            },
-          },
-        },
-      },
-    },
   });
 
   return rent;
@@ -220,45 +142,6 @@ export const getAllRentRequestsFromDB = async ({
 }) => {
   const rents = await prisma.rentalRequests.findMany({
     where: { ...(tenantId && { tenantId }), ...(landlordId && { landlordId }) },
-    include: {
-      tenant: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      property: {
-        include: {
-          location: true,
-          images: true,
-          amenities: {
-            include: {
-              amenity: true,
-            },
-          },
-          features: {
-            include: {
-              feature: true,
-            },
-          },
-          rules: {
-            include: {
-              rule: true,
-            },
-          },
-        },
-      },
-    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -294,45 +177,6 @@ export const getRentRequestFromDB = async ({
   const rent = await prisma.rentalRequests.findUnique({
     where: {
       id: rentId,
-    },
-    include: {
-      tenant: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      landlord: {
-        include: {
-          profile: true,
-        },
-        omit: {
-          password: true,
-        },
-      },
-      property: {
-        include: {
-          location: true,
-          images: true,
-          amenities: {
-            include: {
-              amenity: true,
-            },
-          },
-          features: {
-            include: {
-              feature: true,
-            },
-          },
-          rules: {
-            include: {
-              rule: true,
-            },
-          },
-        },
-      },
     },
   });
 
