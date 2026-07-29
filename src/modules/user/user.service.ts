@@ -5,7 +5,7 @@ import type { AdminUserInputType, UserUpdateInputType } from "./user.schema";
 
 // Get single user
 export const getUserByIdFromDB = async (id: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: {
       id,
     },
@@ -26,7 +26,7 @@ export const getUserByIdFromDB = async (id: string) => {
 
 // Get all users
 export const getAllUsersFromDB = async () => {
-  const users = await prisma.user.findMany({
+  const users = await prisma.users.findMany({
     omit: {
       password: true,
     },
@@ -46,7 +46,7 @@ export const updateUserIntoDB = async (
   id: string,
   payload: UserUpdateInputType | AdminUserInputType,
 ) => {
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.users.findUnique({
     where: {
       id,
     },
@@ -80,7 +80,7 @@ export const updateUserIntoDB = async (
       }),
   };
 
-  await prisma.user.update({
+  await prisma.users.update({
     where: {
       id,
     },
@@ -88,7 +88,7 @@ export const updateUserIntoDB = async (
     data: userData,
   });
 
-  const updatedUser = await prisma.user.findUnique({
+  const updatedUser = await prisma.users.findUnique({
     where: {
       id,
     },
@@ -103,7 +103,7 @@ export const updateUserIntoDB = async (
 
 // Delete user
 export const deleteUserFromDB = async (id: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: {
       id,
     },
@@ -113,7 +113,7 @@ export const deleteUserFromDB = async (id: string) => {
     throw new AppError("User doesn't exist", httpStatus.NOT_FOUND);
   }
 
-  await prisma.user.delete({
+  await prisma.users.delete({
     where: {
       id,
     },

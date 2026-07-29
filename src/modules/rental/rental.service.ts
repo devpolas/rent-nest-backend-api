@@ -25,7 +25,7 @@ export const createRentRequestIntoDB = async (
     throw new AppError("Rent request already exists", httpStatus.BAD_REQUEST);
   }
 
-  const isExitsTenant = await prisma.user.findUnique({
+  const isExitsTenant = await prisma.users.findUnique({
     where: {
       id: tenantId,
     },

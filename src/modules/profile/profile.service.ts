@@ -15,7 +15,7 @@ export const createProfileIntoDB = async ({
   payload: ProfileInputType;
   userId: string;
 }) => {
-  const user = await prisma.user.findUnique({
+  const user = await prisma.users.findUnique({
     where: {
       id: userId,
     },
