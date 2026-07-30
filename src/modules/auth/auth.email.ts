@@ -39,7 +39,7 @@ export const sendVerification = async (email: string) => {
     subject: "Verify Email Address",
     title: "Verify your account",
     description: `Please verify your account. This link expires at ${formatDate(expiresAt)}.`,
-    link: `${config.website_url}/verify-email?email=${user.email}&token=${token}`,
+    link: `${config.website_url}/verify-account?email=${user.email}&token=${token}`,
     actionText: "Verify Email",
   });
 };
