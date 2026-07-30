@@ -5,6 +5,15 @@ enum UserStatus {
   BANNED
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  FACEBOOK
+  APPLE
+  MICROSOFT
+}
+
 enum UserRole {
   TENANT
   LANDLORD

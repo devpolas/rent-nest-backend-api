@@ -1,25 +1,19 @@
 model Users {
-  id  String @id @default(uuid())
+  id String @id @default(uuid())
 
   name String @db.VarChar(255)
-  email String @db.VarChar(255) @unique
-  password String @db.Text
+  email String @unique @db.VarChar(255)
 
   phone String? @db.VarChar(20)
   avatar String? @db.Text
-
-    // Email verification
-  emailVerified Boolean @default(false)
-  emailVerificationToken String? @unique
-  emailVerificationExpires DateTime?
-
-  // Password reset
-  passwordResetToken String? @unique
-  passwordResetExpires DateTime?
+  password String?
 
   role UserRole @default(TENANT)
   status UserStatus @default(ACTIVE)
 
+  emailVerified Boolean @default(false)
+
+  accounts AuthAccounts[]
   sessions AccountSession[]
 
   profile Profile?

@@ -2,6 +2,9 @@
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'DEACTIVATE', 'BLOCKED', 'BANNED');
 
 -- CreateEnum
+CREATE TYPE "AuthProvider" AS ENUM ('LOCAL', 'GOOGLE', 'GITHUB', 'FACEBOOK', 'APPLE', 'MICROSOFT');
+
+-- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('TENANT', 'LANDLORD', 'MODERATOR', 'ADMIN');
 
 -- CreateEnum
@@ -53,6 +56,25 @@ CREATE TABLE "amenities" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "amenities_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "auth_accounts" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "provider" "AuthProvider" NOT NULL,
+    "providerAccountId" TEXT,
+    "accessTokenHash" TEXT,
+    "refreshTokenHash" TEXT,
+    "tokenExpiresAt" TIMESTAMP(3),
+    "emailVerificationToken" TEXT,
+    "emailVerificationExpires" TIMESTAMP(3),
+    "passwordResetToken" TEXT,
+    "passwordResetExpires" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "auth_accounts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -259,16 +281,12 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "password" TEXT NOT NULL,
     "phone" VARCHAR(20),
     "avatar" TEXT,
-    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
-    "emailVerificationToken" TEXT,
-    "emailVerificationExpires" TIMESTAMP(3),
-    "passwordResetToken" TEXT,
-    "passwordResetExpires" TIMESTAMP(3),
+    "password" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'TENANT',
     "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+    "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -298,6 +316,18 @@ CREATE INDEX "amenities_slug_idx" ON "amenities"("slug");
 
 -- CreateIndex
 CREATE INDEX "amenities_name_idx" ON "amenities"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "auth_accounts_emailVerificationToken_key" ON "auth_accounts"("emailVerificationToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "auth_accounts_passwordResetToken_key" ON "auth_accounts"("passwordResetToken");
+
+-- CreateIndex
+CREATE INDEX "auth_accounts_userId_idx" ON "auth_accounts"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "auth_accounts_userId_provider_key" ON "auth_accounts"("userId", "provider");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "features_name_key" ON "features"("name");
@@ -477,12 +507,6 @@ CREATE UNIQUE INDEX "social_profile_platform_profileId_key" ON "social_profile"(
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_emailVerificationToken_key" ON "users"("emailVerificationToken");
-
--- CreateIndex
-CREATE UNIQUE INDEX "users_passwordResetToken_key" ON "users"("passwordResetToken");
-
--- CreateIndex
 CREATE INDEX "users_name_idx" ON "users"("name");
 
 -- CreateIndex
@@ -493,6 +517,9 @@ CREATE INDEX "users_phone_idx" ON "users"("phone");
 
 -- AddForeignKey
 ALTER TABLE "account_session" ADD CONSTRAINT "account_session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "auth_accounts" ADD CONSTRAINT "auth_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "locations" ADD CONSTRAINT "locations_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
