@@ -51,3 +51,19 @@ export const sendResponseToCookies = (
     path: "/",
   });
 };
+
+export const clearAuthCookies = (res: Response) => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: config.node_env === "production",
+    sameSite: config.node_env === "production" ? "none" : "lax",
+    path: "/",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: config.node_env === "production",
+    sameSite: config.node_env === "production" ? "none" : "lax",
+    path: "/",
+  });
+};
