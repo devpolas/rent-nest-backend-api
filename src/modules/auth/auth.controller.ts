@@ -2,7 +2,11 @@ import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { AppError } from "../../utils/appError";
-import { sendResponse, sendResponseToCookies } from "../../utils/sendResponse";
+import {
+  clearAuthCookies,
+  sendResponse,
+  sendResponseToCookies,
+} from "../../utils/sendResponse";
 import { Time } from "../../utils/timeHelper";
 
 import {
@@ -17,18 +21,62 @@ import {
   createUser,
   checkUserCredentials,
   createAccessToken,
-  forgotPassword,
-  resetPassword,
-  verifyEmail,
-  sendVerification,
-  logoutUser,
-  logoutOtherDevices,
-  logoutDevice,
 } from "./auth.service";
 import {
   extractSessionInfo,
   type ExtractedSessionInfo,
 } from "../../utils/sessionHelper";
+import { googleLogin, handleGoogleCallback } from "./oauth.service";
+import {
+  forgotPassword,
+  resetPassword,
+  sendVerification,
+  verifyEmail,
+} from "./auth.email";
+import {
+  logoutCurrentSession,
+  logoutOtherSessions,
+  logoutSessionById,
+} from "./session.service";
+
+// social login
+export const continueWithGoogle = catchAsync(async (req, res) => {
+  const authorizationUrl = await googleLogin(req);
+  res.redirect(authorizationUrl);
+});
+
+export const googleCallbackController = catchAsync(async (req, res) => {
+  const { code, state } = req.query;
+
+  if (!code || !state) {
+    throw new AppError("Invalid Google callback", httpStatus.BAD_REQUEST);
+  }
+
+  const sessionInfo = extractSessionInfo(req);
+
+  const { accessToken, refreshToken } = await handleGoogleCallback(
+    req.session,
+    code as string,
+    state as string,
+    sessionInfo,
+  );
+
+  clearAuthCookies(res);
+
+  sendResponseToCookies(res, {
+    cookieKey: "accessToken",
+    keyValue: accessToken,
+    maxAge: Time.day(1),
+  });
+
+  sendResponseToCookies(res, {
+    cookieKey: "refreshToken",
+    keyValue: refreshToken,
+    maxAge: Time.day(30),
+  });
+
+  res.redirect("https://renttnest.vercel.app");
+});
 
 // Signup
 export const signup = catchAsync(
@@ -60,6 +108,8 @@ export const signin = catchAsync(
       body,
       systemInfo,
     );
+
+    clearAuthCookies(res);
 
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
@@ -94,6 +144,8 @@ export const refreshToken = catchAsync(
     }
 
     const accessToken = await createAccessToken(token);
+
+    res.clearCookie("accessToken");
 
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
@@ -175,10 +227,9 @@ export const resetUserPassword = catchAsync(
 export const logout = catchAsync(async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
 
-  await logoutUser(refreshToken);
+  await logoutCurrentSession(refreshToken);
 
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  clearAuthCookies(res);
 
   sendResponse(res, {
     success: true,
@@ -187,7 +238,7 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const logoutSingleDevice = catchAsync(
+export const logoutDeviceBySessionId = catchAsync(
   async (req: Request, res: Response) => {
     if (!req.user) {
       throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
@@ -195,7 +246,7 @@ export const logoutSingleDevice = catchAsync(
 
     const sessionId = req.params.sessionId as string;
 
-    const result = await logoutDevice(req.user.id, sessionId);
+    const result = await logoutSessionById(req.user.id, sessionId);
 
     sendResponse(res, {
       success: true,
@@ -205,13 +256,13 @@ export const logoutSingleDevice = catchAsync(
   },
 );
 
-export const logoutAllOtherDevices = catchAsync(async (req, res) => {
+export const logoutFromOtherDevices = catchAsync(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (!req.user) {
     throw new AppError("UNAUTHORIZED", httpStatus.UNAUTHORIZED);
   }
 
-  await logoutOtherDevices(req.user.id, refreshToken);
+  await logoutOtherSessions(req.user.id, refreshToken);
 
   sendResponse(res, {
     success: true,
