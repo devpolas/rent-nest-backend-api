@@ -7,6 +7,14 @@ import { verifyToken } from "../utils/jwt";
 import type { JwtPayload } from "jsonwebtoken";
 import prisma from "../lib/prisma";
 
+import "express-session";
+
+declare module "express-session" {
+  interface SessionData {
+    googleOAuthState?: string;
+  }
+}
+
 declare global {
   namespace Express {
     interface Request {
