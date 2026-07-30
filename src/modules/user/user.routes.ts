@@ -3,8 +3,8 @@ import {
   deleteMe,
   deleteUserById,
   getAllUsers,
-  getMe,
   getUserById,
+  me,
   updateMe,
   updateUserById,
 } from "./user.controller";
@@ -16,11 +16,9 @@ const router = Router();
 router.use(protect);
 
 // Current user routes
-
-router.route("/me").get(getMe).patch(updateMe).delete(deleteMe);
+router.route("/me").get(me).patch(updateMe).delete(deleteMe);
 
 // Admin routes
-
 router.use(restrictTo("ADMIN"));
 
 router.route("/").get(getAllUsers);

@@ -2,6 +2,22 @@ import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
 import type { AdminUserInputType, UserUpdateInputType } from "./user.schema";
+import type { Prisma } from "../../../generated/prisma/client";
+
+const userInclude = {
+  profile: {
+    include: {
+      location: true,
+      socialProfile: true,
+    },
+  },
+  sessions: true,
+} satisfies Prisma.UsersInclude;
+
+const meInclude = {
+  ...userInclude,
+  accounts: true,
+} satisfies Prisma.UsersInclude;
 
 // Get single user
 export const getUserByIdFromDB = async (id: string) => {
@@ -12,15 +28,25 @@ export const getUserByIdFromDB = async (id: string) => {
     omit: {
       password: true,
     },
-    include: {
-      profile: {
-        include: {
-          location: true,
-          socialProfile: true,
-        },
-      },
-      sessions: true,
+    include: userInclude,
+  });
+
+  if (!user) {
+    throw new AppError("User doesn't exist", httpStatus.NOT_FOUND);
+  }
+
+  return user;
+};
+// Get me
+export const getMe = async (id: string) => {
+  const user = await prisma.users.findUnique({
+    where: {
+      id,
     },
+    omit: {
+      password: true,
+    },
+    include: meInclude,
   });
 
   if (!user) {
@@ -36,9 +62,7 @@ export const getAllUsersFromDB = async () => {
     omit: {
       password: true,
     },
-    include: {
-      profile: true,
-    },
+    include: userInclude,
     orderBy: {
       createdAt: "desc",
     },
@@ -98,6 +122,8 @@ export const updateUserIntoDB = async (
     where: {
       id,
     },
+
+    include: userInclude,
 
     omit: {
       password: true,

@@ -3,6 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import {
   deleteUserFromDB,
   getAllUsersFromDB,
+  getMe,
   getUserByIdFromDB,
   updateUserIntoDB,
 } from "./user.service";
@@ -12,13 +13,12 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AdminUserSchema, UserUpdateSchema } from "./user.schema";
 
 // Get current logged in user
-
-export const getMe = catchAsync(async (req: Request, res: Response) => {
+export const me = catchAsync(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
-  const user = await getUserByIdFromDB(req.user.id);
+  const user = await getMe(req.user.id);
 
   sendResponse(res, {
     success: true,
@@ -31,7 +31,6 @@ export const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Update current user
-
 export const updateMe = catchAsync(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);

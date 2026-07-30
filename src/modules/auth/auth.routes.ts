@@ -14,7 +14,7 @@ import {
   googleCallbackController,
 } from "./auth.controller";
 import { protect } from "../../middlewares/auth";
-import { getMe } from "../user/user.controller";
+import { me } from "../user/user.controller";
 
 const router = Router();
 
@@ -34,7 +34,7 @@ router.post("/reset-password", resetUserPassword);
 router.use(protect);
 
 // Current logged-in user
-router.get("/me", getMe);
+router.get("/me", me);
 router.post("/logout", logout);
 router.delete("/sessions/:sessionId", protect, logoutDeviceBySessionId);
 router.post("/logout-other-devices", protect, logoutFromOtherDevices);
