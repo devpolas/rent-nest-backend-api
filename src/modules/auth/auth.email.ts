@@ -11,7 +11,6 @@ import {
   findUserByEmail,
 } from "./auth.helper";
 import httpStatus from "http-status";
-import bcrypt from "bcrypt";
 
 export const sendVerification = async (email: string) => {
   const user = ensureUserExists(await findUserByEmail(email));

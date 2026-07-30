@@ -11,6 +11,7 @@ import {
   oauth2Client,
 } from "../../config/google";
 import { createLoginSession, validateUserStatus } from "./auth.helper";
+import type { AuthProvider } from "../../../generated/prisma/enums";
 
 /**
  * Step 1: Generate Google authorization URL
@@ -43,6 +44,35 @@ export const handleGoogleCallback = async (
   // Security: Google must verify the email
   if (!googleUser.email_verified) {
     throw new AppError("Google email is not verified", httpStatus.BAD_REQUEST);
+  }
+
+  const existingOAuthAccount = await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.users.findUnique({
+      where: {
+        email: googleUser.email,
+        emailVerified: true,
+      },
+    });
+
+    if (!existingUser) return null;
+
+    const existingAccount = await tx.authAccounts.findUnique({
+      where: {
+        userId_provider: {
+          userId: existingUser.id,
+          provider: googleUser.provider as AuthProvider,
+        },
+      },
+    });
+
+    if (!existingAccount) return null;
+
+    return existingUser;
+  });
+
+  if (existingOAuthAccount) {
+    validateUserStatus(existingOAuthAccount);
+    return createLoginSession(existingOAuthAccount, sessionInfo);
   }
 
   const result = await prisma.$transaction(async (tx) => {
