@@ -38,6 +38,7 @@ import {
   logoutOtherSessions,
   logoutSessionById,
 } from "./session.service";
+import config from "../../config";
 
 // social login
 export const continueWithGoogle = catchAsync(async (req, res) => {
@@ -75,7 +76,7 @@ export const googleCallbackController = catchAsync(async (req, res) => {
     maxAge: Time.day(30),
   });
 
-  res.redirect("https://renttnest.vercel.app");
+  res.redirect(config.website_url);
 });
 
 // Signup
