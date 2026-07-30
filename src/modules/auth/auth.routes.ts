@@ -19,7 +19,7 @@ import { getMe } from "../user/user.controller";
 const router = Router();
 
 router.get("/google/callback", googleCallbackController);
-router.get("/social/google", continueWithGoogle);
+router.get("/google", continueWithGoogle);
 
 router.post("/signup", signup);
 router.post("/signin", signin);
