@@ -152,7 +152,7 @@ export const forgotPassword = async (email: string) => {
   });
 
   return {
-    message: "If this email exists, a password reset link has been sent.",
+    message: "Password reset link has been sent in your email. Please check your email.",
   };
 };
 
