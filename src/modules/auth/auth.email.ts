@@ -195,7 +195,7 @@ export const resetPassword = async (token: string, password: string) => {
     prisma.authAccounts.update({
       where: {
         userId_provider: {
-          userId: account.id,
+          userId: account.userId,
           provider: "LOCAL",
         },
       },
