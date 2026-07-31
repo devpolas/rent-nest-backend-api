@@ -47,19 +47,6 @@ export const validateUserStatus = (user: LoginUser) => {
   }
 };
 
-export async function hasAuthProvider(userId: string, provider: AuthProvider) {
-  const account = await prisma.authAccounts.findUnique({
-    where: {
-      userId_provider: {
-        userId,
-        provider,
-      },
-    },
-  });
-
-  return !!account;
-}
-
 export const createLoginSession = async (
   user: LoginUser,
   session: ExtractedSessionInfo,
