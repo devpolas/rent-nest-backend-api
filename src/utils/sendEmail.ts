@@ -111,10 +111,25 @@ export const sendEmail = async ({
   });
 
   const mailOptions = {
-    from: `"Rent Nest" <${config.nodemailer_user}>`,
+    from: {
+      name: "Rent Nest",
+      address: config.nodemailer_user,
+    },
+
     to,
+
+    replyTo: config.nodemailer_user,
+
     subject: `Rent Nest - ${subject}`,
+
+    text: description,
+
     html,
+
+    headers: {
+      "X-Priority": "3",
+      "X-Mailer": "Rent Nest Mailer",
+    },
   };
 
   try {

@@ -94,7 +94,7 @@ export const verifyEmail = async (email: string, token: string) => {
     prisma.authAccounts.update({
       where: {
         userId_provider: {
-          userId: account.id,
+          userId: user.id,
           provider: "LOCAL",
         },
       },
