@@ -90,7 +90,7 @@ export const checkUserCredentials = async (
     await sendVerification(user.email);
 
     throw new AppError(
-      "Please verify your email before login.",
+      "Please verify your email before login",
       httpStatus.FORBIDDEN,
     );
   }
