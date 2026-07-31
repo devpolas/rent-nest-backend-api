@@ -1,5 +1,9 @@
 import type { JwtPayload } from "jsonwebtoken";
-import type { UserRole, UserStatus } from "../../../generated/prisma/enums";
+import type {
+  AuthProvider,
+  UserRole,
+  UserStatus,
+} from "../../../generated/prisma/enums";
 
 import prisma from "../../lib/prisma";
 
@@ -12,7 +16,6 @@ import type { ExtractedSessionInfo } from "../../utils/sessionHelper";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
 import bcrypt from "bcrypt";
-import type { Prisma } from "../../../generated/prisma/client";
 
 type LoginUser = {
   id: string;
@@ -43,6 +46,19 @@ export const validateUserStatus = (user: LoginUser) => {
       throw new AppError("Your account is not active.", httpStatus.FORBIDDEN);
   }
 };
+
+export async function hasAuthProvider(userId: string, provider: AuthProvider) {
+  const account = await prisma.authAccounts.findUnique({
+    where: {
+      userId_provider: {
+        userId,
+        provider,
+      },
+    },
+  });
+
+  return !!account;
+}
 
 export const createLoginSession = async (
   user: LoginUser,
@@ -129,19 +145,6 @@ export const createVerificationToken = () => {
     hashedToken: hashToken(token),
     expiresAt: new Date(Date.now() + Time.minute(15)),
   };
-};
-
-const revokeSessions = (where: Prisma.AccountSessionWhereInput) => {
-  return prisma.accountSession.updateMany({
-    where: {
-      ...where,
-      isRevoked: false,
-    },
-    data: {
-      isRevoked: true,
-      revokedAt: new Date(),
-    },
-  });
 };
 
 export const revokeAllUserSessions = async (userId: string) => {

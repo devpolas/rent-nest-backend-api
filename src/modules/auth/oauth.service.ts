@@ -10,7 +10,12 @@ import {
   googleCallback,
   oauth2Client,
 } from "../../config/google";
-import { createLoginSession, validateUserStatus } from "./auth.helper";
+import {
+  createLoginSession,
+  findUserByEmail,
+  hasAuthProvider,
+  validateUserStatus,
+} from "./auth.helper";
 import type { AuthProvider } from "../../../generated/prisma/enums";
 
 /**
@@ -44,6 +49,17 @@ export const handleGoogleCallback = async (
   // Security: Google must verify the email
   if (!googleUser.email_verified) {
     throw new AppError("Google email is not verified", httpStatus.BAD_REQUEST);
+  }
+
+  const existsLocalAccount = await findUserByEmail(googleUser.email);
+
+  if (existsLocalAccount) {
+    if (await hasAuthProvider(existsLocalAccount.id, "LOCAL")) {
+      throw new AppError(
+        "This account was created using email and password. Please sign in with your email and password.",
+        httpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   const existingOAuthAccount = await prisma.$transaction(async (tx) => {

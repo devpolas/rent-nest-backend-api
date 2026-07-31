@@ -13,6 +13,7 @@ import {
   ensureManualAccount,
   ensureUserExists,
   findUserByEmail,
+  hasAuthProvider,
   validateUserStatus,
 } from "./auth.helper";
 import { sendVerification } from "./auth.email";
@@ -22,6 +23,17 @@ export const createUser = async (payload: SignupPayload) => {
   const { name, email, password, role } = payload;
 
   const exists = await findUserByEmail(email);
+
+  if (exists) {
+    if (!(await hasAuthProvider(exists.id, "LOCAL"))) {
+      throw new AppError(
+        "This account was created using a social login. Please sign in with your OAuth provider.",
+        httpStatus.BAD_REQUEST,
+      );
+    }
+
+    throw new AppError("User already exists", httpStatus.BAD_REQUEST);
+  }
 
   if (exists) {
     throw new AppError("User already exists", httpStatus.BAD_REQUEST);

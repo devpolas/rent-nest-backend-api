@@ -76,7 +76,7 @@ export const googleCallbackController = catchAsync(async (req, res) => {
     maxAge: Time.day(30),
   });
 
-  res.redirect(config.website_url);
+  res.redirect(`${config.website_url}/dashboard`);
 });
 
 // Signup
