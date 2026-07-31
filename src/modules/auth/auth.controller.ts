@@ -184,7 +184,7 @@ export const refreshToken = catchAsync(
 // Verify Email
 export const verifyUserEmail = catchAsync(
   async (req: Request, res: Response) => {
-    const { email, token } = VerifyEmailSchema.parse(req.query);
+    const { email, token } = VerifyEmailSchema.parse(req.body);
 
     const result = await verifyEmail(email, token);
 
