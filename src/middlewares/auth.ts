@@ -7,27 +7,6 @@ import { verifyToken } from "../utils/jwt";
 import type { JwtPayload } from "jsonwebtoken";
 import prisma from "../lib/prisma";
 
-import "express-session";
-
-declare module "express-session" {
-  interface SessionData {
-    googleOAuthState?: string;
-  }
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        name: string;
-        email: string;
-        role: UserRole;
-      };
-    }
-  }
-}
-
 export const protect = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies.accessToken

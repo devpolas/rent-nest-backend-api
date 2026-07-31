@@ -40,9 +40,18 @@ import {
 } from "./session.service";
 import config from "../../config";
 
+function isValidCallbackUrl(url: string) {
+  return url.startsWith("/") && !url.startsWith("//");
+}
+
 // social login
 export const continueWithGoogle = catchAsync(async (req, res) => {
+  const { callbackUrl } = req.query;
+
+  req.session.callbackUrl = typeof callbackUrl === "string" ? callbackUrl : "/";
+
   const authorizationUrl = await googleLogin(req);
+
   res.redirect(authorizationUrl);
 });
 
@@ -76,7 +85,14 @@ export const googleCallbackController = catchAsync(async (req, res) => {
     maxAge: Time.day(30),
   });
 
-  res.redirect(`${config.website_url}/dashboard`);
+  const callbackUrl = req.session.callbackUrl;
+
+  delete req.session.callbackUrl;
+
+  const redirectUrl =
+    callbackUrl && isValidCallbackUrl(callbackUrl) ? callbackUrl : "/";
+
+  res.redirect(`${config.website_url}${redirectUrl}`);
 });
 
 // Signup
