@@ -5,6 +5,7 @@ import { stripe } from "../../lib/stripe";
 import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
 import { Prisma } from "../../../generated/prisma/client";
+import { sendEmail } from "../../utils/sendEmail";
 
 export const checkout = async ({
   rentRequestId,
@@ -145,6 +146,7 @@ export const paymentCreateIntoDB = async ({
   sessionId: string;
 }) => {
   const session = await stripe.checkout.sessions.retrieve(sessionId);
+
   if (session.payment_status !== "paid") {
     throw new AppError(
       "Payment has not been completed.",
@@ -167,20 +169,18 @@ export const paymentCreateIntoDB = async ({
     },
   });
 
-  console.log(existingPayment);
-
   if (existingPayment) {
     return existingPayment;
   }
 
   if (!session.metadata) {
     throw new AppError(
-      "Fail to payment please contact support session",
+      "Payment metadata not found.",
       httpStatus.FAILED_DEPENDENCY,
     );
   }
 
-  const { rentRequestId, leaseDays } = session.metadata ?? {};
+  const { rentRequestId, leaseDays } = session.metadata;
 
   if (!rentRequestId || !leaseDays) {
     throw new AppError("Invalid payment metadata.", httpStatus.BAD_REQUEST);
@@ -189,14 +189,12 @@ export const paymentCreateIntoDB = async ({
   if (!session.currency) {
     throw new AppError("Currency not found.", httpStatus.BAD_REQUEST);
   }
-
   const currency = session.currency;
 
   if (session.amount_total == null) {
     throw new AppError("Payment amount not found.", httpStatus.BAD_REQUEST);
   }
 
-  // expireIn
   const leaseDaysNumber = Number(leaseDays);
 
   if (!Number.isInteger(leaseDaysNumber) || leaseDaysNumber <= 0) {
@@ -214,12 +212,30 @@ export const paymentCreateIntoDB = async ({
     where: {
       id: rentRequestId,
     },
+
     select: {
       id: true,
       status: true,
       propertyId: true,
       tenantId: true,
       landlordId: true,
+      tenant: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      landlord: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+      property: {
+        select: {
+          title: true,
+        },
+      },
     },
   });
 
@@ -236,11 +252,15 @@ export const paymentCreateIntoDB = async ({
 
   await prisma.$transaction(async (tx) => {
     await tx.rentalRequests.update({
-      where: { id: rentRequestId },
+      where: {
+        id: rentRequestId,
+      },
+
       data: {
         status: "ACTIVE",
       },
     });
+
     await tx.payment.create({
       data: {
         amount: totalAmount,
@@ -255,6 +275,49 @@ export const paymentCreateIntoDB = async ({
       },
     });
   });
+
+  // ===========================
+  // Send Emails
+  // ===========================
+
+  try {
+    // Tenant confirmation email
+    await sendEmail({
+      to: currentRentRequest.tenant.email,
+
+      subject: "Payment Successful",
+
+      title: "Payment Completed Successfully",
+
+      description: `
+      Hello ${currentRentRequest.tenant.name}
+      Your payment for "${currentRentRequest.property.title}" has been completed successfully.
+      Your rental request is now active.
+      Payment Amount: ${totalAmount} ${currency.toUpperCase()}
+      Lease Duration: ${leaseDaysNumber} days
+      Transaction ID: ${transactionId}Thank you for choosing Rent Nest.`,
+    });
+
+    // Landlord notification email
+
+    await sendEmail({
+      to: currentRentRequest.landlord.email,
+      subject: "New Rental Payment Received",
+      title: "New Tenant Payment",
+      description: `
+      Hello ${currentRentRequest.landlord.name}
+      A tenant has successfully completed payment for your property.
+      Property: ${currentRentRequest.property.title}
+      Tenant: ${currentRentRequest.tenant.name}
+      Payment Amount: ${totalAmount} ${currency.toUpperCase()}
+      Lease Duration: ${leaseDaysNumber} days
+      Transaction ID: ${transactionId}
+      Rent Nest Team
+      `,
+    });
+  } catch (error) {
+    console.error("Payment email notification failed:", error);
+  }
 
   const paymentHistory = await prisma.payment.findUnique({
     where: {
