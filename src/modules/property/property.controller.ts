@@ -20,6 +20,7 @@ import {
   type PropertyUpdateInputType,
 } from "./property.schema";
 import { sendResponse } from "../../utils/sendResponse";
+import type { Prisma } from "../../../generated/prisma/client";
 
 // Create Property
 export const createProperty = catchAsync(
@@ -61,25 +62,21 @@ export const createProperty = catchAsync(
 // Get All Properties
 export const getAllProperties = catchAsync(
   async (req: Request, res: Response) => {
+    const extraWhere: Prisma.PropertyWhereInput = {};
     const user = req.user;
 
-    const filter: {
-      landlordId?: string;
-    } = {};
-
+    // Landlord can see only his properties
     if (user?.role === "LANDLORD") {
-      filter.landlordId = user.id;
+      extraWhere.landlordId = user.id;
     }
 
-    const properties = await getAllPropertiesFromDB(filter);
+    const result = await getAllPropertiesFromDB(req.query, extraWhere);
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: "Properties retrieved successfully",
-      data: {
-        properties,
-      },
+      data: result,
     });
   },
 );

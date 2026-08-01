@@ -8,6 +8,8 @@ import type {
 } from "./property.schema";
 import slugify from "slugify";
 import httpStatus from "http-status";
+import type { Prisma } from "../../../generated/prisma/client";
+import { buildPropertyQuery } from "./query.service";
 
 export const createPropertyIntoDB = async ({
   property,
@@ -344,23 +346,79 @@ export const updatePropertyIntoDB = async ({
   });
 };
 
-export const getAllPropertiesFromDB = async ({
-  landlordId,
-}: {
-  landlordId?: string;
-}) => {
-  const properties = await prisma.property.findMany({
-    where: { ...(landlordId && { landlordId }) },
-    include: {
-      images: true,
-      amenities: true,
-      category: true,
-      rules: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+export const getAllPropertiesFromDB = async (
+  query: Record<string, unknown>,
+  extraWhere?: Prisma.PropertyWhereInput,
+) => {
+  const { where, orderBy, skip, take, meta } = buildPropertyQuery(
+    query,
+    extraWhere,
+  );
 
-  return properties;
+  const [properties, total] = await prisma.$transaction([
+    prisma.property.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+      include: {
+        // Basic relations
+        images: true,
+        category: true,
+        location: true,
+
+        // Landlord info
+        landlord: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+
+        // Rating cache
+        _count: {
+          select: {
+            reviews: true,
+          },
+        },
+
+        // Rating fields
+        // already available from property
+
+        amenities: {
+          include: {
+            amenity: true,
+          },
+        },
+
+        features: {
+          include: {
+            feature: true,
+          },
+        },
+
+        rules: {
+          include: {
+            rule: true,
+          },
+        },
+      },
+    }),
+
+    prisma.property.count({
+      where,
+    }),
+  ]);
+
+  return {
+    meta: {
+      ...meta,
+      total,
+      totalPage: Math.ceil(total / meta.limit),
+    },
+    properties,
+  };
 };
 
 export const getPropertyByIdFromDB = async (id: string) => {
