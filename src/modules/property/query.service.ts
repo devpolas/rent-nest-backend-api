@@ -11,50 +11,241 @@ export const buildPropertyQuery = (
 ) => {
   const {
     search,
-
     category,
     categoryId,
-
     country,
     division,
     district,
     city,
     village,
-
     minRent,
     maxRent,
-
     minArea,
     maxArea,
-
     bedrooms,
     bathrooms,
-
     availability,
     status,
-
     amenityIds,
     featureIds,
     ruleIds,
-
-    // Rating filters
     minRating,
     minReviews,
-
     sortBy = "createdAt",
     sortOrder = "desc",
-
     page = "1",
     limit = "10",
   } = query as PropertyQuery;
 
   const andConditions: Prisma.PropertyWhereInput[] = [];
 
-  // ... keep your existing search/category/location/rent/area code
+  // Search
 
-  // ======================
-  // Rating Filter
-  // ======================
+  if (search) {
+    const keyword = String(search);
+
+    andConditions.push({
+      OR: [
+        {
+          title: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: keyword,
+            mode: "insensitive",
+          },
+        },
+        {
+          category: {
+            name: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          },
+        },
+        {
+          location: {
+            OR: [
+              {
+                country: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                division: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                district: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                city: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                village: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+              {
+                postalCode: {
+                  contains: keyword,
+                  mode: "insensitive",
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  }
+
+  // Category
+
+  if (categoryId) {
+    andConditions.push({
+      categoryId: String(categoryId),
+    });
+  }
+
+  if (category) {
+    andConditions.push({
+      category: {
+        slug: String(category),
+      },
+    });
+  }
+
+  // Location
+
+  const locationFilter: Prisma.LocationWhereInput = {};
+
+  if (country) {
+    locationFilter.country = {
+      equals: String(country),
+      mode: "insensitive",
+    };
+  }
+
+  if (division) {
+    locationFilter.division = {
+      equals: String(division),
+      mode: "insensitive",
+    };
+  }
+
+  if (district) {
+    locationFilter.district = {
+      equals: String(district),
+      mode: "insensitive",
+    };
+  }
+
+  if (city) {
+    locationFilter.city = {
+      equals: String(city),
+      mode: "insensitive",
+    };
+  }
+
+  if (village) {
+    locationFilter.village = {
+      equals: String(village),
+      mode: "insensitive",
+    };
+  }
+
+  if (Object.keys(locationFilter).length > 0) {
+    andConditions.push({
+      location: locationFilter,
+    });
+  }
+
+  // Rent
+
+  if (minRent || maxRent) {
+    const rentFilter: Prisma.DecimalFilter = {};
+
+    if (minRent) {
+      rentFilter.gte = new Prisma.Decimal(String(minRent));
+    }
+
+    if (maxRent) {
+      rentFilter.lte = new Prisma.Decimal(String(maxRent));
+    }
+
+    andConditions.push({
+      rent: rentFilter,
+    });
+  }
+
+  // Area
+
+  if (minArea || maxArea) {
+    const areaFilter: Prisma.DecimalFilter = {};
+
+    if (minArea) {
+      areaFilter.gte = new Prisma.Decimal(String(minArea));
+    }
+
+    if (maxArea) {
+      areaFilter.lte = new Prisma.Decimal(String(maxArea));
+    }
+
+    andConditions.push({
+      area: areaFilter,
+    });
+  }
+
+  // Bedrooms
+
+  if (bedrooms) {
+    andConditions.push({
+      bedrooms: {
+        gte: Number(bedrooms),
+      },
+    });
+  }
+
+  // Bathrooms
+
+  if (bathrooms) {
+    andConditions.push({
+      bathrooms: {
+        gte: Number(bathrooms),
+      },
+    });
+  }
+
+  // Availability
+
+  if (availability) {
+    andConditions.push({
+      availability: availability as AvailabilityStatus,
+    });
+  }
+
+  // Status
+
+  if (status) {
+    andConditions.push({
+      status: status as PropertyStatus,
+    });
+  }
+
+  // Rating
 
   if (minRating) {
     andConditions.push({
@@ -72,12 +263,13 @@ export const buildPropertyQuery = (
     });
   }
 
-  // ======================
-  // Amenities
-  // ======================
+  // Amenities (must contain all)
 
   if (amenityIds) {
-    const ids = String(amenityIds).split(",").filter(Boolean);
+    const ids = String(amenityIds)
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
     andConditions.push(
       ...ids.map((id) => ({
@@ -90,12 +282,13 @@ export const buildPropertyQuery = (
     );
   }
 
-  // ======================
-  // Features
-  // ======================
+  // Features (must contain all)
 
   if (featureIds) {
-    const ids = String(featureIds).split(",").filter(Boolean);
+    const ids = String(featureIds)
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
     andConditions.push(
       ...ids.map((id) => ({
@@ -108,12 +301,13 @@ export const buildPropertyQuery = (
     );
   }
 
-  // ======================
-  // Rules
-  // ======================
+  // Rules (must contain all)
 
   if (ruleIds) {
-    const ids = String(ruleIds).split(",").filter(Boolean);
+    const ids = String(ruleIds)
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
     andConditions.push(
       ...ids.map((id) => ({
@@ -126,31 +320,23 @@ export const buildPropertyQuery = (
     );
   }
 
-  // ======================
   // Final Where
-  // ======================
 
   const where: Prisma.PropertyWhereInput = {
-    ...extraWhere,
-
-    ...(andConditions.length && {
+    ...(extraWhere ?? {}),
+    ...(andConditions.length > 0 && {
       AND: andConditions,
     }),
   };
 
-  // ======================
   // Pagination
-  // ======================
 
-  const pageNumber = Math.max(Number(page), 1);
-
-  const limitNumber = Math.min(Number(limit), 100);
+  const pageNumber = Math.max(1, Number(page) || 1);
+  const limitNumber = Math.min(100, Math.max(1, Number(limit) || 10));
 
   const skip = (pageNumber - 1) * limitNumber;
 
-  // ======================
   // Sorting
-  // ======================
 
   const allowedSortFields = [
     "createdAt",
@@ -161,10 +347,12 @@ export const buildPropertyQuery = (
     "bathrooms",
     "averageRating",
     "reviewCount",
-  ];
+  ] as const;
 
-  const sortField = allowedSortFields.includes(String(sortBy))
-    ? String(sortBy)
+  const sortField = allowedSortFields.includes(
+    String(sortBy) as (typeof allowedSortFields)[number],
+  )
+    ? (String(sortBy) as (typeof allowedSortFields)[number])
     : "createdAt";
 
   const orderBy: Prisma.PropertyOrderByWithRelationInput = {
@@ -173,13 +361,9 @@ export const buildPropertyQuery = (
 
   return {
     where,
-
     orderBy,
-
     skip,
-
     take: limitNumber,
-
     meta: {
       page: pageNumber,
       limit: limitNumber,

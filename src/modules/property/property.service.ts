@@ -427,10 +427,47 @@ export const getPropertyByIdFromDB = async (id: string) => {
       id,
     },
     include: {
+      // Basic relations
       images: true,
-      amenities: true,
       category: true,
-      rules: true,
+      location: true,
+
+      // Landlord info
+      landlord: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+
+      // Rating cache
+      _count: {
+        select: {
+          reviews: true,
+        },
+      },
+
+      // Rating fields
+      // already available from property
+
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+
+      features: {
+        include: {
+          feature: true,
+        },
+      },
+
+      rules: {
+        include: {
+          rule: true,
+        },
+      },
     },
   });
 
