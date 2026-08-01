@@ -23,10 +23,14 @@ export const createReviewIntoDB = async ({
     where: {
       id: propertyId,
     },
+
     select: {
       id: true,
+      totalRating: true,
+      reviewCount: true,
     },
   });
+
   if (!existingProperty) {
     throw new AppError("Property not found", httpStatus.NOT_FOUND);
   }
@@ -48,21 +52,37 @@ export const createReviewIntoDB = async ({
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
-  const newReview = await prisma.review.create({
-    data: {
-      propertyId,
-      tenantId,
-      ...payload,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    const newReview = await tx.review.create({
+      data: {
+        propertyId,
+        tenantId,
+        ...payload,
+      },
+    });
+
+    const newReviewCount = existingProperty.reviewCount + 1;
+
+    const newTotalRating = existingProperty.totalRating + payload.rating;
+
+    const newAverageRating = newTotalRating / newReviewCount;
+
+    await tx.property.update({
+      where: {
+        id: propertyId,
+      },
+
+      data: {
+        reviewCount: newReviewCount,
+        totalRating: newTotalRating,
+        averageRating: newAverageRating,
+      },
+    });
+
+    return newReview;
   });
 
-  const review = await prisma.review.findUnique({
-    where: {
-      id: newReview.id,
-    },
-  });
-
-  return review;
+  return result;
 };
 
 export const updateReviewIntoDBById = async ({
@@ -159,7 +179,9 @@ export const deleteReviewFromDBById = async ({
   reviewerId?: string;
 }) => {
   const existingReview = await prisma.review.findUnique({
-    where: { id },
+    where: {
+      id,
+    },
   });
 
   if (!existingReview) {
@@ -167,14 +189,51 @@ export const deleteReviewFromDBById = async ({
   }
 
   if (reviewerId && existingReview.tenantId !== reviewerId) {
-    if (!existingReview) {
-      throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
-    }
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
-  await prisma.review.delete({
-    where: { id },
+  const result = await prisma.$transaction(async (tx) => {
+    const property = await tx.property.findUnique({
+      where: {
+        id: existingReview.propertyId,
+      },
+
+      select: {
+        totalRating: true,
+        reviewCount: true,
+      },
+    });
+
+    if (!property) {
+      throw new AppError("Property not found", httpStatus.NOT_FOUND);
+    }
+
+    await tx.review.delete({
+      where: {
+        id,
+      },
+    });
+
+    const newReviewCount = property.reviewCount - 1;
+    const newTotalRating = property.totalRating - existingReview.rating;
+
+    const newAverageRating =
+      newReviewCount > 0 ? newTotalRating / newReviewCount : 0;
+
+    await tx.property.update({
+      where: {
+        id: existingReview.propertyId,
+      },
+
+      data: {
+        reviewCount: newReviewCount,
+        totalRating: newTotalRating,
+        averageRating: newAverageRating,
+      },
+    });
+
+    return true;
   });
 
-  return true;
+  return result;
 };
