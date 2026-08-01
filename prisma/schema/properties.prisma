@@ -17,6 +17,10 @@ model Property {
   availability     AvailabilityStatus @default(AVAILABLE)
   status           PropertyStatus @default(PENDING)
 
+  averageRating Decimal @default(0) @db.Decimal(3,2)
+  reviewCount Int @default(0)
+  totalRating Int @default(0)
+
   locationId String? @unique
   location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
