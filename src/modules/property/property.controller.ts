@@ -76,7 +76,10 @@ export const getAllProperties = catchAsync(
       success: true,
       statusCode: httpStatus.OK,
       message: "Properties retrieved successfully",
-      data: result,
+      meta: result.meta,
+      data: {
+        properties: result.properties,
+      },
     });
   },
 );
