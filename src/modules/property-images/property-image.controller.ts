@@ -12,15 +12,14 @@ import {
   deletePropertyImageFromDB,
 } from "./property-image.service";
 
-import {
-  CreatePropertyImageSchema,
-  SetThumbnailSchema,
-} from "./property-image.schema";
+import { CreatePropertyImageSchema } from "./property-image.schema";
 
 export const createImages = catchAsync(async (req: Request, res: Response) => {
+  const propertyId = req.params.propertyId as string;
   const payload = CreatePropertyImageSchema.parse(req.body);
 
   const images = await createPropertyImagesIntoDB(
+    propertyId,
     payload,
     req.user!.id,
     req.user!.role,
@@ -46,11 +45,8 @@ export const getPropertyImages = catchAsync(
 
     sendResponse(res, {
       success: true,
-
       statusCode: httpStatus.OK,
-
       message: "Images retrieved successfully",
-
       data: {
         images,
       },
@@ -59,25 +55,19 @@ export const getPropertyImages = catchAsync(
 );
 
 export const setThumbnail = catchAsync(async (req: Request, res: Response) => {
-  const { propertyId } = SetThumbnailSchema.parse(req.body);
-
+  const propertyId = req.params.propertyId as string;
+  const id = req.params.id as string;
   const image = await setPropertyThumbnailIntoDB(
-    req.params.id as string,
-
+    id,
     propertyId,
-
     req.user!.id,
-
     req.user!.role,
   );
 
   sendResponse(res, {
     success: true,
-
     statusCode: httpStatus.OK,
-
     message: "Thumbnail updated successfully",
-
     data: {
       image,
     },
@@ -87,17 +77,13 @@ export const setThumbnail = catchAsync(async (req: Request, res: Response) => {
 export const deleteImage = catchAsync(async (req: Request, res: Response) => {
   await deletePropertyImageFromDB(
     req.params.id as string,
-
     req.user!.id,
-
     req.user!.role,
   );
 
   sendResponse(res, {
     success: true,
-
     statusCode: httpStatus.NO_CONTENT,
-
     message: "Image deleted successfully",
   });
 });

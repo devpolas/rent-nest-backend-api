@@ -31,15 +31,16 @@ const checkPropertyPermission = async (
 // Create property images
 
 export const createPropertyImagesIntoDB = async (
+  propertyId: string,
   payload: CreatePropertyImageInput,
   userId: string,
   role: string,
 ) => {
-  await checkPropertyPermission(payload.propertyId, userId, role);
+  await checkPropertyPermission(propertyId, userId, role);
 
   await prisma.propertyImage.createMany({
     data: payload.images.map((image, index) => ({
-      propertyId: payload.propertyId,
+      propertyId: propertyId,
       url: image.url,
       publicId: image.publicId,
 
@@ -50,7 +51,7 @@ export const createPropertyImagesIntoDB = async (
 
   return prisma.propertyImage.findMany({
     where: {
-      propertyId: payload.propertyId,
+      propertyId: propertyId,
     },
 
     orderBy: {
@@ -66,12 +67,10 @@ export const getPropertyImagesFromDB = async (propertyId: string) => {
     where: {
       propertyId,
     },
-
     orderBy: [
       {
         isThumbnail: "desc",
       },
-
       {
         createdAt: "desc",
       },
