@@ -206,6 +206,7 @@ CREATE TABLE "property_features" (
 CREATE TABLE "property_images" (
     "id" TEXT NOT NULL,
     "propertyId" TEXT NOT NULL,
+    "publicId" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "isThumbnail" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

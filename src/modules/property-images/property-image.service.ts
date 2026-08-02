@@ -1,8 +1,8 @@
-import prisma from "../../lib/prisma";
-import { AppError } from "../../utils/appError";
 import httpStatus from "http-status";
-
+import prisma from "../../lib/prisma";
 import type { CreatePropertyImageInput } from "./property-image.schema";
+import { AppError } from "../../utils/appError";
+import cloudinary from "../../config/cloudinary";
 
 // Check property permission
 
@@ -28,7 +28,7 @@ const checkPropertyPermission = async (
   return property;
 };
 
-// Create images
+// Create property images
 
 export const createPropertyImagesIntoDB = async (
   payload: CreatePropertyImageInput,
@@ -37,21 +37,32 @@ export const createPropertyImagesIntoDB = async (
 ) => {
   await checkPropertyPermission(payload.propertyId, userId, role);
 
-  const images = await prisma.propertyImage.createMany({
-    data: payload.images.map((url) => ({
+  await prisma.propertyImage.createMany({
+    data: payload.images.map((image, index) => ({
       propertyId: payload.propertyId,
+      url: image.url,
+      publicId: image.publicId,
 
-      url,
+      // First uploaded image becomes thumbnail
+      isThumbnail: index === 0,
     })),
   });
 
-  return images;
+  return prisma.propertyImage.findMany({
+    where: {
+      propertyId: payload.propertyId,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 };
 
-// Get images
+// Get property images
 
 export const getPropertyImagesFromDB = async (propertyId: string) => {
-  const images = await prisma.propertyImage.findMany({
+  return prisma.propertyImage.findMany({
     where: {
       propertyId,
     },
@@ -66,8 +77,6 @@ export const getPropertyImagesFromDB = async (propertyId: string) => {
       },
     ],
   });
-
-  return images;
 };
 
 // Set thumbnail
@@ -95,20 +104,15 @@ export const setPropertyThumbnailIntoDB = async (
   }
 
   await prisma.$transaction(async (tx) => {
-    // remove old thumbnail
-
     await tx.propertyImage.updateMany({
       where: {
         propertyId,
-        isThumbnail: true,
       },
 
       data: {
         isThumbnail: false,
       },
     });
-
-    // set new thumbnail
 
     await tx.propertyImage.update({
       where: {
@@ -128,7 +132,7 @@ export const setPropertyThumbnailIntoDB = async (
   });
 };
 
-// Delete image
+// Delete property image
 
 export const deletePropertyImageFromDB = async (
   imageId: string,
@@ -139,10 +143,6 @@ export const deletePropertyImageFromDB = async (
     where: {
       id: imageId,
     },
-
-    include: {
-      property: true,
-    },
   });
 
   if (!image) {
@@ -151,21 +151,24 @@ export const deletePropertyImageFromDB = async (
 
   await checkPropertyPermission(image.propertyId, userId, role);
 
-  // protect only thumbnail
+  const imageCount = await prisma.propertyImage.count({
+    where: {
+      propertyId: image.propertyId,
+    },
+  });
 
-  if (image.isThumbnail) {
-    const imageCount = await prisma.propertyImage.count({
-      where: {
-        propertyId: image.propertyId,
-      },
-    });
+  if (image.isThumbnail && imageCount === 1) {
+    throw new AppError("Cannot delete the only image.", httpStatus.BAD_REQUEST);
+  }
 
-    if (imageCount === 1) {
-      throw new AppError(
-        "Cannot delete the only thumbnail image",
-        httpStatus.BAD_REQUEST,
-      );
-    }
+  // Delete from Cloudinary
+  const result = await cloudinary.uploader.destroy(image.publicId);
+
+  if (result.result !== "ok" && result.result !== "not found") {
+    throw new AppError(
+      "Failed to delete image from Cloudinary.",
+      httpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
 
   await prisma.propertyImage.delete({
@@ -173,4 +176,32 @@ export const deletePropertyImageFromDB = async (
       id: imageId,
     },
   });
+
+  // If thumbnail was deleted and there are remaining images,
+  // promote the newest image to thumbnail.
+  if (image.isThumbnail) {
+    const nextImage = await prisma.propertyImage.findFirst({
+      where: {
+        propertyId: image.propertyId,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (nextImage) {
+      await prisma.propertyImage.update({
+        where: {
+          id: nextImage.id,
+        },
+
+        data: {
+          isThumbnail: true,
+        },
+      });
+    }
+  }
+
+  return null;
 };
