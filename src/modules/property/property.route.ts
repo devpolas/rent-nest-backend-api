@@ -8,10 +8,12 @@ import {
   deletePropertyById,
 } from "./property.controller";
 import { reviewRouter } from "../reviews/review.route";
+import { propertyImageRouter } from "../property-images/property-image.route";
 
 const router = Router();
 
 // forward to review router
+router.use("/:propertyId/images", propertyImageRouter);
 router.use("/:propertyId/reviews", reviewRouter);
 
 // Public routes

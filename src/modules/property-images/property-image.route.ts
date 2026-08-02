@@ -2,18 +2,17 @@ import { Router } from "express";
 
 import {
   createImages,
-  getImages,
   setThumbnail,
   deleteImage,
+  getPropertyImages,
 } from "./property-image.controller";
 
 import { protect, restrictTo } from "../../middlewares/auth";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 // Public
-
-router.get("/property/:propertyId", getImages);
+router.get("/", getPropertyImages);
 
 // Protected
 

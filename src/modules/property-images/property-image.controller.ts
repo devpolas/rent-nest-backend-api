@@ -39,21 +39,24 @@ export const createImages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const getImages = catchAsync(async (req: Request, res: Response) => {
-  const images = await getPropertyImagesFromDB(req.params.propertyId as string);
+export const getPropertyImages = catchAsync(
+  async (req: Request, res: Response) => {
+    const propertyId = req.params.propertyId as string;
+    const images = await getPropertyImagesFromDB(propertyId);
 
-  sendResponse(res, {
-    success: true,
+    sendResponse(res, {
+      success: true,
 
-    statusCode: httpStatus.OK,
+      statusCode: httpStatus.OK,
 
-    message: "Images retrieved successfully",
+      message: "Images retrieved successfully",
 
-    data: {
-      images,
-    },
-  });
-});
+      data: {
+        images,
+      },
+    });
+  },
+);
 
 export const setThumbnail = catchAsync(async (req: Request, res: Response) => {
   const { propertyId } = SetThumbnailSchema.parse(req.body);
