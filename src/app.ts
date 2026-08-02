@@ -22,6 +22,7 @@ import { socialProfileRouter } from "./modules/social-profile/social-profile.rou
 import { propertyImageRouter } from "./modules/property-images/property-image.route";
 import { sendResponse } from "./utils/sendResponse";
 import httpStatus from "http-status";
+import { imageRouter } from "./modules/image/image.routes";
 
 const app: Application = express();
 
@@ -74,6 +75,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/profiles", profileRouter);
 app.use("/api/v1/properties", propertyRouter);
+app.use("/api/v1/images", imageRouter);
 app.use("/api/v1/locations", locationRouter);
 app.use("/api/v1/property-images", propertyImageRouter);
 app.use("/api/v1/rental-requests", rentalRouter);
