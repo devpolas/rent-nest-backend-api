@@ -132,9 +132,9 @@ export const checkout = async ({
 
     mode: "payment",
 
-    success_url: `${config.website_url}/payment?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${config.website_url}/dashboard/payment?success=true&session_id={CHECKOUT_SESSION_ID}`,
 
-    cancel_url: `${config.website_url}/payment?success=false`,
+    cancel_url: `${config.website_url}/dashboard/payment?success=false`,
   });
 
   return session;
