@@ -375,7 +375,7 @@ export const getPaymentHistoryByIdFromDB = async ({
   if (tenantId && paymentHistory.tenantId !== tenantId) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
-  if (tenantId && paymentHistory.landlordId !== landlordId) {
+  if (landlordId && paymentHistory.landlordId !== landlordId) {
     throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
   }
 
