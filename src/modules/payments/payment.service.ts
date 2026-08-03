@@ -386,3 +386,27 @@ export const getAllPaymentHistoryFromDB = async ({
 
   return paymentHistory;
 };
+
+export const getPaymentHistoryByIdFromDB = async ({
+  transactionId,
+  tenantId,
+  landlordId,
+}: {
+  transactionId: string;
+  tenantId?: string;
+  landlordId?: string;
+}) => {
+  const paymentHistory = await prisma.payment.findUnique({
+    where: { transactionId },
+  });
+  if (!paymentHistory) {
+    throw new AppError("Payment not found", httpStatus.NOT_FOUND);
+  }
+  if (tenantId && paymentHistory.tenantId !== tenantId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+  }
+  if (tenantId && paymentHistory.landlordId !== landlordId) {
+    throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
+  }
+  return paymentHistory;
+};
