@@ -2,10 +2,15 @@ import express from "express";
 import session from "express-session";
 import type { Application, Request, Response } from "express";
 import cors from "cors";
-import { authRouter } from "./modules/auth/auth.routes";
-import globalErrorController from "./middlewares/error";
-import config from "./config";
 import cookieParser from "cookie-parser";
+import httpStatus from "http-status";
+
+import config from "./config";
+import globalErrorController from "./middlewares/error";
+import notfound from "./middlewares/not-found";
+import { sendResponse } from "./utils/sendResponse";
+
+import { authRouter } from "./modules/auth/auth.routes";
 import { userRouter } from "./modules/user/user.routes";
 import { propertyRouter } from "./modules/property/property.route";
 import { rentalRouter } from "./modules/rental/rental.route";
@@ -15,35 +20,59 @@ import { amenityRouter } from "./modules/amenity/amenity.route";
 import { categoryRouter } from "./modules/category/category.route";
 import { featureRouter } from "./modules/feature/feature.route";
 import { ruleRouter } from "./modules/rule/rule.route";
-import notfound from "./middlewares/not-found";
 import { profileRouter } from "./modules/profile/profile.route";
 import { locationRouter } from "./modules/location/location.route";
 import { socialProfileRouter } from "./modules/social-profile/social-profile.route";
 import { propertyImageRouter } from "./modules/property-images/property-image.route";
-import { sendResponse } from "./utils/sendResponse";
-import httpStatus from "http-status";
 import { imageRouter } from "./modules/image/image.routes";
 
 const app: Application = express();
 
-app.set("trust proxy", true);
+app.set("trust proxy", 1); // Enable proxy trust for Vercel/Reverse Proxies
+
+// 1. CORS Configuration (DYNAMIC ORIGIN CHECK)
+const allowedOrigins = config.app_urls ?? [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or Next.js server actions)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
+    credentials: true, // 👈 Required for cookies
+  }),
+);
+
+// 2. COOKIE PARSER
+app.use(cookieParser());
+
+// 3. EXPRESS SESSION (Updated Cookie Settings for Cross-Domain)
+const isProduction = config.node_env === "production";
+
 app.use(
   session({
     secret: config.session_secret,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Required for Vercel behind HTTPS proxies
     cookie: {
-      secure: config.node_env === "production",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax", // 👈 Required for localhost -> vercel cross-site requests
       httpOnly: true,
       maxAge: 1000 * 60 * 10,
     },
   }),
 );
+
+// 4. BODY PARSERS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: config.app_urls, credentials: true }));
-app.use(cookieParser());
 
+// ROUTES
 app.get("/", (_req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -88,7 +117,6 @@ app.use("/api/v1/payments", paymentRouter);
 app.use("/api/v1/reviews", reviewRouter);
 
 app.use(notfound);
-
 app.use(globalErrorController);
 
 export default app;
