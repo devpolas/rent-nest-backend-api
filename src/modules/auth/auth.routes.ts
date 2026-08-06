@@ -36,7 +36,7 @@ router.use(protect);
 // Current logged-in user
 router.get("/me", me);
 router.post("/logout", logout);
-router.delete("/sessions/:sessionId", protect, logoutDeviceBySessionId);
-router.post("/logout-other-devices", protect, logoutFromOtherDevices);
+router.delete("/sessions/:sessionId", logoutDeviceBySessionId);
+router.post("/logout-other-devices", logoutFromOtherDevices);
 
 export const authRouter = router;
