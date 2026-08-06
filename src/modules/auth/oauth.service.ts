@@ -8,19 +8,33 @@ import type { ExtractedSessionInfo } from "../../utils/sessionHelper";
 import {
   GOOGLE_SCOPES,
   googleCallback,
-  oauth2Client,
+  googleClient,
 } from "../../config/google";
 import { createLoginSession, validateUserStatus } from "./auth.helper";
 
 /**
  * Step 1: Generate Google authorization URL
  */
-export const googleLogin = async (req: Request) => {
+export const googleLogin = async (req: Request): Promise<string> => {
   const state = crypto.randomBytes(32).toString("hex");
 
   req.session.googleOAuthState = state;
 
-  return oauth2Client.generateAuthUrl({
+  // Force session to save BEFORE returning redirect URL
+  await new Promise<void>((resolve, reject) => {
+    req.session.save((err) => {
+      if (err)
+        reject(
+          new AppError(
+            "Failed to initialize session.",
+            httpStatus.INTERNAL_SERVER_ERROR,
+          ),
+        );
+      else resolve();
+    });
+  });
+
+  return googleClient.generateAuthUrl({
     access_type: "offline",
     scope: GOOGLE_SCOPES,
     include_granted_scopes: true,

@@ -27,8 +27,10 @@ import { propertyImageRouter } from "./modules/property-images/property-image.ro
 import { imageRouter } from "./modules/image/image.routes";
 
 const app: Application = express();
+const isProduction = config.node_env === "production";
 
-app.set("trust proxy", 1); // Enable proxy trust for Vercel/Reverse Proxies
+// Enable proxy trust based on environment or set to true for cloud hosting like Vercel/Render
+app.set("trust proxy", isProduction ? true : 1);
 
 // 1. CORS Configuration (DYNAMIC ORIGIN CHECK)
 const allowedOrigins = config.app_urls ?? [];
@@ -51,7 +53,6 @@ app.use(
 app.use(cookieParser());
 
 // 3. EXPRESS SESSION (Updated Cookie Settings for Cross-Domain)
-const isProduction = config.node_env === "production";
 
 app.use(
   session({

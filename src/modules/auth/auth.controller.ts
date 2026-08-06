@@ -46,9 +46,16 @@ function isValidCallbackUrl(url: string) {
 
 // social login
 export const continueWithGoogle = catchAsync(async (req, res) => {
-  const { callbackUrl } = req.query;
+  // Get query parameter safely
+  const rawCallbackUrl = req.query.callbackUrl;
 
-  req.session.callbackUrl = typeof callbackUrl === "string" ? callbackUrl : "/";
+  // Ensure it's a string, starts with a single slash, and is not a protocol-relative URL
+  const cleanCallbackUrl =
+    typeof rawCallbackUrl === "string" && isValidCallbackUrl(rawCallbackUrl)
+      ? rawCallbackUrl
+      : "/";
+
+  req.session.callbackUrl = cleanCallbackUrl;
 
   const authorizationUrl = await googleLogin(req);
 

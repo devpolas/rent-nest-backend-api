@@ -13,19 +13,22 @@ export interface GoogleResponse {
   provider: string;
 }
 
-export const oauth2Client = new google.auth.OAuth2(
+// 👈 Extract the exact type directly from googleapis to prevent version mismatch
+type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
+
+export const googleClient: OAuth2Client = new google.auth.OAuth2(
   config.google_client_id,
   config.google_client_secret,
   config.google_callback_url,
 );
 
-export const GOOGLE_SCOPES = ["openid", "email", "profile"];
+export const GOOGLE_SCOPES: string[] = ["openid", "email", "profile"];
 
 export const googleCallback = async (
   session: Session & Partial<SessionData>,
   code: string,
   state: string,
-) => {
+): Promise<GoogleResponse> => {
   if (!session.googleOAuthState) {
     throw new AppError("OAuth session expired.", httpStatus.BAD_REQUEST);
   }
@@ -36,17 +39,16 @@ export const googleCallback = async (
 
   delete session.googleOAuthState;
 
-  const { tokens } = await oauth2Client.getToken(code);
+  const { tokens } = await googleClient.getToken(code);
 
-  oauth2Client.setCredentials(tokens);
+  googleClient.setCredentials(tokens);
 
   const oauth2 = google.oauth2({
-    auth: oauth2Client,
+    auth: googleClient,
     version: "v2",
   });
 
   const { data: profile } = await oauth2.userinfo.get();
-  console.log(profile);
 
   if (!profile.email || !profile.id) {
     throw new AppError(
@@ -58,9 +60,9 @@ export const googleCallback = async (
   return {
     id: profile.id,
     email: profile.email,
-    email_verified: profile.verified_email,
-    name: profile.name,
-    picture: profile.picture,
+    email_verified: profile.verified_email ?? false,
+    name: profile.name ?? null,
+    picture: profile.picture ?? null,
     provider: "GOOGLE",
   };
 };
