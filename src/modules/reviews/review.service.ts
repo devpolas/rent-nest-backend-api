@@ -136,6 +136,16 @@ export const getReviewFromDBById = async (reviewId: string) => {
     where: {
       id: reviewId,
     },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
   });
 
   if (!existingReview) {
@@ -156,6 +166,16 @@ export const getAllReviewFromDB = async ({
         tenantId: reviewerId,
       }),
     },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -165,6 +185,16 @@ export const getAllReviewFromDB = async ({
 export const getAllReviewFromDBByPropertyId = async (propertyId: string) => {
   const reviews = await prisma.review.findMany({
     where: { propertyId },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 

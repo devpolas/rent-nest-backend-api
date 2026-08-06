@@ -142,6 +142,22 @@ export const getAllRentRequestsFromDB = async ({
 }) => {
   const rents = await prisma.rentalRequests.findMany({
     where: { ...(tenantId && { tenantId }), ...(landlordId && { landlordId }) },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+      property: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -177,6 +193,22 @@ export const getRentRequestFromDB = async ({
   const rent = await prisma.rentalRequests.findUnique({
     where: {
       id: rentId,
+    },
+    include: {
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      },
+      property: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
   });
 
