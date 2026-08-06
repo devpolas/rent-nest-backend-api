@@ -78,8 +78,6 @@ export const googleCallbackController = catchAsync(async (req, res) => {
     sessionInfo,
   );
 
-  clearAuthCookies(res);
-
   sendResponseToCookies(res, {
     cookieKey: "accessToken",
     keyValue: accessToken,
@@ -132,8 +130,6 @@ export const signin = catchAsync(
       body,
       systemInfo,
     );
-
-    clearAuthCookies(res);
 
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
