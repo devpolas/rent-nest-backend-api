@@ -145,6 +145,12 @@ export const getReviewFromDBById = async (reviewId: string) => {
           avatar: true,
         },
       },
+      property: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
   });
 
@@ -175,6 +181,12 @@ export const getAllReviewFromDB = async ({
           avatar: true,
         },
       },
+      property: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -192,6 +204,12 @@ export const getAllReviewFromDBByPropertyId = async (propertyId: string) => {
           name: true,
           email: true,
           avatar: true,
+        },
+      },
+      property: {
+        select: {
+          id: true,
+          title: true,
         },
       },
     },
