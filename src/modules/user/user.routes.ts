@@ -19,14 +19,12 @@ router.use(protect);
 router.route("/me").get(me).patch(updateMe).delete(deleteMe);
 
 // Admin routes
-router.use(restrictTo("ADMIN"));
-
-router.route("/").get(getAllUsers);
+router.route("/").get(restrictTo("ADMIN"), getAllUsers);
 
 router
   .route("/:id")
-  .get(getUserById)
-  .patch(updateUserById)
-  .delete(deleteUserById);
+  .get(restrictTo("ADMIN", "LANDLORD"), getUserById)
+  .patch(restrictTo("ADMIN"), updateUserById)
+  .delete(restrictTo("ADMIN"), deleteUserById);
 
 export const userRouter = router;

@@ -5,6 +5,12 @@ import type { AdminUserInputType, UserUpdateInputType } from "./user.schema";
 import type { Prisma } from "../../../generated/prisma/client";
 
 const userInclude = {
+  _count: {
+    select: {
+      landlordRentalRequests: true,
+      tenantRentalRequests: true,
+    },
+  },
   profile: {
     include: {
       location: true,
