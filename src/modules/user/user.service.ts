@@ -9,6 +9,7 @@ const userInclude = {
     select: {
       landlordRentalRequests: true,
       tenantRentalRequests: true,
+      property: true,
     },
   },
   profile: {
