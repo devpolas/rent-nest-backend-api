@@ -373,6 +373,7 @@ export const getAllPropertiesFromDB = async (
             id: true,
             name: true,
             email: true,
+            avatar: true,
           },
         },
 
@@ -438,6 +439,7 @@ export const getPropertyByIdFromDB = async (id: string) => {
           id: true,
           name: true,
           email: true,
+          avatar: true,
         },
       },
 
