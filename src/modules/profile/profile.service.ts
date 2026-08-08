@@ -7,12 +7,12 @@ import type {
 import prisma from "../../lib/prisma";
 import { AppError } from "../../utils/appError";
 
-// Create Profile
-export const createProfileIntoDB = async ({
+// Create Profile & update
+export const createOrUpdateProfileIntoDB = async ({
   payload,
   userId,
 }: {
-  payload: ProfileInputType;
+  payload: ProfileInputType | ProfileUpdateInputType;
   userId: string;
 }) => {
   const user = await prisma.users.findUnique({
@@ -25,36 +25,36 @@ export const createProfileIntoDB = async ({
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
 
-  const existingProfile = await prisma.profile.findUnique({
+  const profileData = {
+    ...(payload.profileImage !== undefined && {
+      profileImage: payload.profileImage,
+    }),
+
+    ...(payload.bio !== undefined && {
+      bio: payload.bio,
+    }),
+
+    ...(payload.birthdate !== undefined && {
+      birthdate: payload.birthdate,
+    }),
+  };
+
+  const profile = await prisma.profile.upsert({
     where: {
-      userId: userId,
+      userId,
     },
-  });
 
-  if (existingProfile) {
-    throw new AppError("Profile already exists", httpStatus.BAD_REQUEST);
-  }
-
-  const profile = await prisma.profile.create({
-    data: {
+    create: {
       user: {
         connect: {
           id: userId,
         },
       },
 
-      ...(payload.profileImage !== undefined && {
-        profileImage: payload.profileImage,
-      }),
-
-      ...(payload.bio !== undefined && {
-        bio: payload.bio,
-      }),
-
-      ...(payload.birthdate !== undefined && {
-        birthdate: payload.birthdate,
-      }),
+      ...profileData,
     },
+
+    update: profileData,
 
     include: {
       user: {
@@ -101,64 +101,6 @@ export const getProfileFromDB = async (userId: string) => {
   }
 
   return profile;
-};
-
-// Update Profile
-
-export const updateProfileIntoDB = async ({
-  userId,
-  payload,
-}: {
-  userId: string;
-  payload: ProfileUpdateInputType;
-}) => {
-  const profile = await prisma.profile.findUnique({
-    where: {
-      userId,
-    },
-  });
-
-  if (!profile) {
-    throw new AppError("Profile not found", httpStatus.NOT_FOUND);
-  }
-
-  const updatePayload = {
-    ...(payload.profileImage !== undefined && {
-      profileImage: payload.profileImage,
-    }),
-
-    ...(payload.bio !== undefined && {
-      bio: payload.bio,
-    }),
-
-    ...(payload.birthdate !== undefined && {
-      birthdate: payload.birthdate,
-    }),
-  };
-
-  const updatedProfile = await prisma.profile.update({
-    where: {
-      userId,
-    },
-
-    data: updatePayload,
-
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          role: true,
-        },
-      },
-
-      location: true,
-
-      socialProfile: true,
-    },
-  });
-
-  return updatedProfile;
 };
 
 export const getProfileId = async (userId: string) => {
