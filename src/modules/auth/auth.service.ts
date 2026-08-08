@@ -39,6 +39,7 @@ export const createUser = async (payload: SignupPayload) => {
         email,
         password: hashedPassword,
         role,
+        profile: {},
       },
     });
 
