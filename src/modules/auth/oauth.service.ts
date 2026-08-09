@@ -74,7 +74,9 @@ export const handleGoogleCallback = async (
           email: googleUser.email,
           avatar: googleUser.picture ?? null,
           emailVerified: true,
-          profile: {},
+          profile: {
+            create:{}
+          },
         },
       });
     }
@@ -98,7 +100,6 @@ export const handleGoogleCallback = async (
           userId: existingUser.id,
           provider: "GOOGLE",
           providerAccountId: googleUser.id,
-          profile: {},
         },
       });
     }
