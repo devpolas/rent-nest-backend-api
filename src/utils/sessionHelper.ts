@@ -34,7 +34,10 @@ function normalizeIp(ip?: string): string {
 }
 
 export function extractSessionInfo(req: Request): ExtractedSessionInfo {
-  const userAgent = req.headers["user-agent"] || "Unknown";
+  const userAgent =
+    typeof req.headers["user-agent"] === "string"
+      ? req.headers["user-agent"]
+      : "Unknown";
 
   const parser = Bowser.getParser(userAgent);
 
@@ -46,7 +49,6 @@ export function extractSessionInfo(req: Request): ExtractedSessionInfo {
     : "Unknown Browser";
 
   const osName = parser.getOSName();
-
   const osVersion = parser.getOSVersion();
 
   const operatingSystem = osName
