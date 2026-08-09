@@ -29,7 +29,7 @@ export const createLocationIntoDB = async (payload: LocationCreateInput) => {
     }
   }
 
-  const locationPayload = await prisma.location.create({
+  const location = await prisma.location.create({
     data: {
       type: payload.type,
 
@@ -56,10 +56,6 @@ export const createLocationIntoDB = async (payload: LocationCreateInput) => {
         profileId: payload.profileId,
       }),
     },
-  });
-
-  const location = await prisma.location.create({
-    data: locationPayload,
   });
 
   return location;
