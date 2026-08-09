@@ -38,25 +38,65 @@ export const createPropertyImagesIntoDB = async (
 ) => {
   await checkPropertyPermission(propertyId, userId, role);
 
-  await prisma.propertyImage.createMany({
-    data: payload.images.map((image, index) => ({
-      propertyId: propertyId,
-      url: image.url,
-      publicId: image.publicId,
-
-      // First uploaded image becomes thumbnail
-      isThumbnail: index === 0,
-    })),
+  const existingImageCount = await prisma.propertyImage.count({
+    where: {
+      propertyId,
+    },
   });
+
+  const totalImageCount = existingImageCount + payload.images.length;
+
+  /**
+   * Maximum 10 images per property.
+   */
+  if (totalImageCount > 10) {
+    throw new AppError(
+      "A property can have a maximum of 10 images.",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  try {
+    await prisma.propertyImage.createMany({
+      data: payload.images.map((image, index) => ({
+        propertyId,
+        url: image.url,
+        publicId: image.publicId,
+
+        // Only the first image of the property
+        // becomes the initial thumbnail.
+        isThumbnail: existingImageCount === 0 && index === 0,
+      })),
+    });
+  } catch (error) {
+    /**
+     * Database failed after Cloudinary upload.
+     *
+     * Remove the uploaded images from Cloudinary
+     * because their PropertyImage records were
+     * not created successfully.
+     */
+    await Promise.allSettled(
+      payload.images.map((image) =>
+        cloudinary.uploader.destroy(image.publicId),
+      ),
+    );
+
+    throw error;
+  }
 
   return prisma.propertyImage.findMany({
     where: {
-      propertyId: propertyId,
+      propertyId,
     },
-
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: [
+      {
+        isThumbnail: "desc",
+      },
+      {
+        createdAt: "desc",
+      },
+    ],
   });
 };
 
