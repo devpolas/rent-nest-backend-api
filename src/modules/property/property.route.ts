@@ -14,33 +14,20 @@ import { propertyImageRouter } from "../property-images/property-image.route";
 
 const router = Router();
 
-/* ============================================
- * Nested routes
- * ============================================ */
 
 router.use("/:propertyId/images", propertyImageRouter);
 router.use("/:propertyId/reviews", reviewRouter);
 
-/* ============================================
- * Public routes
- * ============================================ */
 
 router.get("/", getAllProperties);
 
-/* ============================================
- * Protected routes
- * ============================================ */
 
 router.use(protect);
 
 // Must come before /:id
-router.get("/my", restrictTo("LANDLORD"), getAllProperties);
+router.get("/my-properties", restrictTo("LANDLORD"), getAllProperties);
 
 router.post("/", restrictTo("LANDLORD"), createProperty);
-
-/* ============================================
- * Property ID routes
- * ============================================ */
 
 // Public property details
 router.get("/:id", getPropertyById);
