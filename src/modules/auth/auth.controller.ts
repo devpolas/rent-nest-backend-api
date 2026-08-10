@@ -68,14 +68,14 @@ export const googleCallbackController = catchAsync(async (req, res) => {
 
   // user hit "cancel" / denied consent on Google's side
   if (googleError) {
-    return res.redirect(`${config.website_url}/login?error=oauth_denied`);
+    return res.redirect(`${config.website_url}/signin?error=oauth_denied`);
   }
 
   // no code/state at all, AND no trace of our session -> definitely expired/lost,
   // not a malformed request
   if (!code || !state) {
     if (!req.session.oauthStartedAt) {
-      return res.redirect(`${config.website_url}/login?error=session_expired`);
+      return res.redirect(`${config.website_url}/signin?error=session_expired`);
     }
     throw new AppError("Invalid Google callback", httpStatus.BAD_REQUEST);
   }
@@ -87,7 +87,7 @@ export const googleCallbackController = catchAsync(async (req, res) => {
     !req.session.oauthStartedAt ||
     Date.now() - req.session.oauthStartedAt > OAUTH_FLOW_MAX_AGE_MS
   ) {
-    return res.redirect(`${config.website_url}/login?error=session_expired`);
+    return res.redirect(`${config.website_url}/signin?error=session_expired`);
   }
 
   const sessionInfo = extractSessionInfo(req);
