@@ -165,8 +165,6 @@ export const refreshToken = catchAsync(
 
     const accessToken = await createAccessToken(token);
 
-    res.clearCookie("accessToken");
-
     sendResponseToCookies(res, {
       cookieKey: "accessToken",
       keyValue: accessToken,
