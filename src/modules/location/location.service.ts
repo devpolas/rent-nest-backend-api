@@ -9,56 +9,126 @@ import type {
 
 // Create Location
 export const createLocationIntoDB = async (payload: LocationCreateInput) => {
-  if (payload.type !== "PROPERTY" && !payload.profileId) {
-    throw new AppError(
-      "Profile id required for user location",
-      httpStatus.BAD_REQUEST,
-    );
-  }
+  return prisma.$transaction(async (tx) => {
+    // PROPERTY LOCATION
 
-  if (payload.profileId) {
-    const existingLocation = await prisma.location.findFirst({
-      where: {
-        profileId: payload.profileId,
+    if (payload.type === "PROPERTY") {
+      if (!payload.propertyId) {
+        throw new AppError(
+          "Property id required for property location",
+          httpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Make sure property exists
+      const property = await tx.property.findUnique({
+        where: {
+          id: payload.propertyId,
+        },
+        select: {
+          id: true,
+          locationId: true,
+        },
+      });
+
+      if (!property) {
+        throw new AppError("Property not found", httpStatus.NOT_FOUND);
+      }
+
+      // Property can have only one location
+      if (property.locationId) {
+        throw new AppError(
+          "Property location already exists",
+          httpStatus.BAD_REQUEST,
+        );
+      }
+
+      // PROPERTY cannot have profileId
+      if (payload.profileId) {
+        throw new AppError(
+          "Property location cannot have profileId",
+          httpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    // PROFILE LOCATION
+
+    if (payload.type !== "PROPERTY") {
+      if (!payload.profileId) {
+        throw new AppError(
+          "Profile id required for user location",
+          httpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Profile can have one location per type
+      const existingUserLocation = await tx.location.findFirst({
+        where: {
+          profileId: payload.profileId,
+          type: payload.type,
+        },
+      });
+
+      if (existingUserLocation) {
+        throw new AppError("Location already exists", httpStatus.BAD_REQUEST);
+      }
+
+      // User location cannot have propertyId
+      if (payload.propertyId) {
+        throw new AppError(
+          "User location cannot have propertyId",
+          httpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    // CREATE LOCATION
+
+    const location = await tx.location.create({
+      data: {
         type: payload.type,
+
+        country: payload.country,
+        division: payload.division,
+        district: payload.district,
+        city: payload.city,
+        village: payload.village,
+        postalCode: payload.postalCode,
+
+        ...(payload.latitude !== undefined && {
+          latitude: payload.latitude,
+        }),
+
+        ...(payload.longitude !== undefined && {
+          longitude: payload.longitude,
+        }),
+
+        ...(payload.addressLine !== undefined && {
+          addressLine: payload.addressLine,
+        }),
+
+        ...(payload.profileId !== undefined && {
+          profileId: payload.profileId,
+        }),
       },
     });
 
-    if (existingLocation) {
-      throw new AppError("Location already exists", httpStatus.BAD_REQUEST);
+    // CONNECT LOCATION TO PROPERTY
+
+    if (payload.type === "PROPERTY" && payload.propertyId) {
+      await tx.property.update({
+        where: {
+          id: payload.propertyId,
+        },
+        data: {
+          locationId: location.id,
+        },
+      });
     }
-  }
 
-  const location = await prisma.location.create({
-    data: {
-      type: payload.type,
-
-      country: payload.country,
-      division: payload.division,
-      district: payload.district,
-      city: payload.city,
-      village: payload.village,
-      postalCode: payload.postalCode,
-
-      ...(payload.latitude !== undefined && {
-        latitude: payload.latitude,
-      }),
-
-      ...(payload.longitude !== undefined && {
-        longitude: payload.longitude,
-      }),
-
-      ...(payload.addressLine !== undefined && {
-        addressLine: payload.addressLine,
-      }),
-
-      ...(payload.profileId !== undefined && {
-        profileId: payload.profileId,
-      }),
-    },
+    return location;
   });
-
-  return location;
 };
 
 // Get All Locations

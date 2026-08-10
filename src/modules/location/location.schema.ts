@@ -24,10 +24,37 @@ const LocationBaseSchema = z.object({
 
 export const LocationCreateSchema = LocationBaseSchema.extend({
   type: LocationTypeSchema,
-
-  profileId: z.string().uuid().optional(),
+  profileId: z.uuid().optional(),
+  propertyId: z.uuid().optional(),
 }).superRefine((data, ctx) => {
-  if (data.type !== "PROPERTY" && !data.profileId) {
+  // --------------------------------
+  // PROPERTY location
+  // --------------------------------
+  if (data.type === "PROPERTY") {
+    if (!data.propertyId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["propertyId"],
+        message: "propertyId is required for PROPERTY locations.",
+      });
+    }
+
+    if (data.profileId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["profileId"],
+        message: "PROPERTY locations cannot have a profileId.",
+      });
+    }
+
+    return;
+  }
+
+  // --------------------------------
+  // Profile locations
+  // HOME / CURRENT / WORK
+  // --------------------------------
+  if (!data.profileId) {
     ctx.addIssue({
       code: "custom",
       path: ["profileId"],
@@ -35,11 +62,11 @@ export const LocationCreateSchema = LocationBaseSchema.extend({
     });
   }
 
-  if (data.type === "PROPERTY" && data.profileId) {
+  if (data.propertyId) {
     ctx.addIssue({
       code: "custom",
-      path: ["profileId"],
-      message: "PROPERTY locations cannot have a profileId.",
+      path: ["propertyId"],
+      message: "HOME, CURRENT, and WORK locations cannot have a propertyId.",
     });
   }
 });
@@ -49,4 +76,5 @@ export const LocationUpdateSchema = LocationBaseSchema.partial().extend({
 });
 
 export type LocationCreateInput = z.infer<typeof LocationCreateSchema>;
+
 export type LocationUpdateInput = z.infer<typeof LocationUpdateSchema>;
