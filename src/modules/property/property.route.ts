@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { protect, restrictTo } from "../../middlewares/auth";
+
 import {
   createProperty,
   getAllProperties,
@@ -7,27 +8,44 @@ import {
   updatePropertyById,
   deletePropertyById,
 } from "./property.controller";
+
 import { reviewRouter } from "../reviews/review.route";
 import { propertyImageRouter } from "../property-images/property-image.route";
 
 const router = Router();
 
-// forward to review router
+/* ============================================
+ * Nested routes
+ * ============================================ */
+
 router.use("/:propertyId/images", propertyImageRouter);
 router.use("/:propertyId/reviews", reviewRouter);
 
-// Public routes
-router.route("/").get(getAllProperties);
-router.route("/:id").get(getPropertyById);
+/* ============================================
+ * Public routes
+ * ============================================ */
 
-// Protected routes
+router.get("/", getAllProperties);
+
+/* ============================================
+ * Protected routes
+ * ============================================ */
+
 router.use(protect);
 
-router.route("/").post(restrictTo("LANDLORD"), createProperty);
+// Must come before /:id
+router.get("/my", restrictTo("LANDLORD"), getAllProperties);
 
-// Landlord routes
-router.route("/my").get(restrictTo("LANDLORD"), getAllProperties);
+router.post("/", restrictTo("LANDLORD"), createProperty);
 
+/* ============================================
+ * Property ID routes
+ * ============================================ */
+
+// Public property details
+router.get("/:id", getPropertyById);
+
+// Protected property management
 router
   .route("/:id")
   .patch(restrictTo("LANDLORD", "ADMIN"), updatePropertyById)
