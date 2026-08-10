@@ -4,6 +4,7 @@ import type { Application, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import httpStatus from "http-status";
+import { randomUUID } from "node:crypto";
 import config from "./config";
 import globalErrorController from "./middlewares/error";
 import notfound from "./middlewares/not-found";
@@ -23,6 +24,7 @@ import { locationRouter } from "./modules/location/location.route";
 import { socialProfileRouter } from "./modules/social-profile/social-profile.route";
 import { propertyImageRouter } from "./modules/property-images/property-image.route";
 import { imageRouter } from "./modules/image/image.routes";
+import { Time } from "./utils/timeHelper";
 
 const app: Application = express();
 
@@ -141,7 +143,7 @@ app.use(
        * therefore SameSite=None is required.
        */
       sameSite: isProduction ? "none" : "lax",
-      maxAge: 1000 * 60 * 10,
+      maxAge: Time.hour(1),
       path: "/",
     },
   }),
@@ -180,9 +182,7 @@ app.use(
 app.use((req, res, next) => {
   const existingRequestId = req.headers["x-request-id"];
   const requestId =
-    typeof existingRequestId === "string"
-      ? existingRequestId
-      : crypto.randomUUID();
+    typeof existingRequestId === "string" ? existingRequestId : randomUUID();
   res.setHeader("X-Request-ID", requestId);
   req.headers["x-request-id"] = requestId;
 

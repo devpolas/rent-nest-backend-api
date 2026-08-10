@@ -46,16 +46,17 @@ function isValidCallbackUrl(url: string) {
 
 // social login
 export const continueWithGoogle = catchAsync(async (req, res) => {
-  // Get query parameter safely
   const rawCallbackUrl = req.query.callbackUrl;
 
-  // Ensure it's a string, starts with a single slash, and is not a protocol-relative URL
   const cleanCallbackUrl =
     typeof rawCallbackUrl === "string" && isValidCallbackUrl(rawCallbackUrl)
       ? rawCallbackUrl
       : "/";
 
   req.session.callbackUrl = cleanCallbackUrl;
+  // stamp when this OAuth attempt started, so we can tell "no session"
+  // apart from "session expired" on the way back
+  req.session.oauthStartedAt = Date.now();
 
   const authorizationUrl = await googleLogin(req);
 
@@ -63,10 +64,30 @@ export const continueWithGoogle = catchAsync(async (req, res) => {
 });
 
 export const googleCallbackController = catchAsync(async (req, res) => {
-  const { code, state } = req.query;
+  const { code, state, error: googleError } = req.query;
 
+  // user hit "cancel" / denied consent on Google's side
+  if (googleError) {
+    return res.redirect(`${config.website_url}/login?error=oauth_denied`);
+  }
+
+  // no code/state at all, AND no trace of our session -> definitely expired/lost,
+  // not a malformed request
   if (!code || !state) {
+    if (!req.session.oauthStartedAt) {
+      return res.redirect(`${config.website_url}/login?error=session_expired`);
+    }
     throw new AppError("Invalid Google callback", httpStatus.BAD_REQUEST);
+  }
+
+  // session existed at some point but is stale (defensive upper bound,
+  // separate from cookie/store TTL -- catches store-level eviction too)
+  const OAUTH_FLOW_MAX_AGE_MS = Time.minute(15);
+  if (
+    !req.session.oauthStartedAt ||
+    Date.now() - req.session.oauthStartedAt > OAUTH_FLOW_MAX_AGE_MS
+  ) {
+    return res.redirect(`${config.website_url}/login?error=session_expired`);
   }
 
   const sessionInfo = extractSessionInfo(req);
@@ -93,6 +114,7 @@ export const googleCallbackController = catchAsync(async (req, res) => {
   const callbackUrl = req.session.callbackUrl;
 
   delete req.session.callbackUrl;
+  delete req.session.oauthStartedAt;
 
   const redirectUrl =
     callbackUrl && isValidCallbackUrl(callbackUrl) ? callbackUrl : "/";

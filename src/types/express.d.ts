@@ -5,6 +5,7 @@ declare module "express-session" {
   interface SessionData {
     callbackUrl?: string;
     googleOAuthState?: string;
+    oauthStartedAt?: number;
   }
 }
 
