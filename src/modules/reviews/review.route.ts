@@ -17,7 +17,7 @@ router.route("/:id").get(getReviewById);
 router.use(protect);
 router.route("/").post(restrictTo("TENANT"), createReview);
 
-router.route("/admin/all").get(restrictTo("ADMIN"), getAllReviews);
+router.route("/").get(restrictTo("ADMIN", "TENANT"), getAllReviews);
 
 router
   .route("/:id")
