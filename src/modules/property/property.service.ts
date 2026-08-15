@@ -364,8 +364,27 @@ export const getAllPropertiesFromDB = async (
       include: {
         // Basic relations
         images: true,
-        category: true,
-        location: true,
+        category: {
+          select: {
+            id: true,
+            icon: true,
+            name: true,
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            country: true,
+            division: true,
+            district: true,
+            city: true,
+            village: true,
+            postalCode: true,
+            addressLine: true,
+            latitude: true,
+            longitude: true,
+          },
+        },
 
         // Landlord info
         landlord: {
@@ -389,19 +408,37 @@ export const getAllPropertiesFromDB = async (
 
         amenities: {
           include: {
-            amenity: true,
+            amenity: {
+              select: {
+                id: true,
+                icon: true,
+                name: true,
+              },
+            },
           },
         },
 
         features: {
           include: {
-            feature: true,
+            feature: {
+              select: {
+                id: true,
+                icon: true,
+                name: true,
+              },
+            },
           },
         },
 
         rules: {
           include: {
-            rule: true,
+            rule: {
+              select: {
+                id: true,
+                icon: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -430,8 +467,27 @@ export const getPropertyByIdFromDB = async (id: string) => {
     include: {
       // Basic relations
       images: true,
-      category: true,
-      location: true,
+      category: {
+        select: {
+          id: true,
+          icon: true,
+          name: true,
+        },
+      },
+      location: {
+        select: {
+          id: true,
+          country: true,
+          division: true,
+          district: true,
+          city: true,
+          village: true,
+          postalCode: true,
+          addressLine: true,
+          latitude: true,
+          longitude: true,
+        },
+      },
 
       // Landlord info
       landlord: {
@@ -455,19 +511,37 @@ export const getPropertyByIdFromDB = async (id: string) => {
 
       amenities: {
         include: {
-          amenity: true,
+          amenity: {
+            select: {
+              id: true,
+              icon: true,
+              name: true,
+            },
+          },
         },
       },
 
       features: {
         include: {
-          feature: true,
+          feature: {
+            select: {
+              id: true,
+              icon: true,
+              name: true,
+            },
+          },
         },
       },
 
       rules: {
         include: {
-          rule: true,
+          rule: {
+            select: {
+              id: true,
+              icon: true,
+              name: true,
+            },
+          },
         },
       },
     },
