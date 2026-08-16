@@ -409,6 +409,7 @@ export const getAllPropertiesFromDB = async (
 
         amenities: {
           select: {
+            id: true,
             amenity: {
               select: {
                 id: true,
@@ -421,6 +422,7 @@ export const getAllPropertiesFromDB = async (
 
         features: {
           select: {
+            id: true,
             feature: {
               select: {
                 id: true,
@@ -433,6 +435,7 @@ export const getAllPropertiesFromDB = async (
 
         rules: {
           select: {
+            id: true,
             rule: {
               select: {
                 id: true,
@@ -513,6 +516,7 @@ export const getPropertyByIdFromDB = async (id: string) => {
 
       amenities: {
         select: {
+          id: true,
           amenity: {
             select: {
               id: true,
@@ -525,6 +529,7 @@ export const getPropertyByIdFromDB = async (id: string) => {
 
       features: {
         select: {
+          id: true,
           feature: {
             select: {
               id: true,
@@ -537,6 +542,7 @@ export const getPropertyByIdFromDB = async (id: string) => {
 
       rules: {
         select: {
+          id: true,
           rule: {
             select: {
               id: true,
