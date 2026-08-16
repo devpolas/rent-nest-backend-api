@@ -374,6 +374,7 @@ export const getAllPropertiesFromDB = async (
         location: {
           select: {
             id: true,
+            type: true,
             country: true,
             division: true,
             district: true,
