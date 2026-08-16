@@ -478,6 +478,7 @@ export const getPropertyByIdFromDB = async (id: string) => {
       location: {
         select: {
           id: true,
+          type: true,
           country: true,
           division: true,
           district: true,
