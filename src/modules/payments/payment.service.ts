@@ -14,7 +14,11 @@ export const checkout = async ({
   rentRequestId: string;
   tenantId: string;
 }): Promise<Stripe.Checkout.Session> => {
-  const rentRequest = await prisma.rentalRequests.findUnique({
+  // ============================================================
+  // FETCH RENTAL REQUEST
+  // ============================================================
+
+  const rentalRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentRequestId,
     },
@@ -23,6 +27,7 @@ export const checkout = async ({
       status: true,
       leaseDays: true,
       tenantId: true,
+
       tenant: {
         select: {
           id: true,
@@ -30,6 +35,7 @@ export const checkout = async ({
           email: true,
         },
       },
+
       property: {
         select: {
           id: true,
@@ -42,89 +48,151 @@ export const checkout = async ({
     },
   });
 
-  if (!rentRequest) {
+  // ============================================================
+  // VALIDATION
+  // ============================================================
+
+  if (!rentalRequest) {
     throw new AppError("Rental request not found", httpStatus.NOT_FOUND);
   }
 
-  if (rentRequest.tenantId !== tenantId) {
+  if (rentalRequest.tenantId !== tenantId) {
     throw new AppError(
       "You cannot pay for this rental request",
       httpStatus.FORBIDDEN,
     );
   }
 
-  if (rentRequest.status !== "APPROVED") {
+  if (rentalRequest.status !== "APPROVED") {
     throw new AppError(
       "Only approved rental requests can be paid",
       httpStatus.BAD_REQUEST,
     );
   }
 
-  if (!rentRequest.property || !rentRequest.tenant) {
-    throw new AppError("Invalid rental request data", httpStatus.BAD_REQUEST);
+  if (!rentalRequest.tenant) {
+    throw new AppError("Tenant information not found", httpStatus.BAD_REQUEST);
   }
 
-  if (rentRequest.leaseDays <= 0) {
+  if (!rentalRequest.property) {
+    throw new AppError(
+      "Property information not found",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  if (
+    !Number.isInteger(rentalRequest.leaseDays) ||
+    rentalRequest.leaseDays <= 0
+  ) {
     throw new AppError("Invalid lease duration", httpStatus.BAD_REQUEST);
   }
 
+  // ============================================================
+  // CHECK EXISTING SUCCESSFUL PAYMENT
+  // ============================================================
+
   const existingPayment = await prisma.payment.findFirst({
     where: {
-      tenantId,
-      propertyId: rentRequest.property.id,
+      tenantId: rentalRequest.tenantId,
+      propertyId: rentalRequest.property.id,
       status: "SUCCESS",
+    },
+    select: {
+      id: true,
+      transactionId: true,
     },
   });
 
   if (existingPayment) {
-    throw new AppError("Payment already completed", httpStatus.BAD_REQUEST);
+    throw new AppError(
+      "Payment already completed for this property",
+      httpStatus.BAD_REQUEST,
+    );
   }
 
-  const totalAmount =
-    Number(rentRequest.property.rent) * rentRequest.leaseDays +
-    Number(rentRequest.property.securityDeposit);
+  // ============================================================
+  // CALCULATE PAYMENT
+  // ============================================================
+
+  const rent = Number(rentalRequest.property.rent);
+  const securityDeposit = Number(rentalRequest.property.securityDeposit);
+
+  if (
+    !Number.isFinite(rent) ||
+    rent < 0 ||
+    !Number.isFinite(securityDeposit) ||
+    securityDeposit < 0
+  ) {
+    throw new AppError(
+      "Invalid property payment amount",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  const totalAmount = rent * rentalRequest.leaseDays + securityDeposit;
+
+  if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+    throw new AppError("Invalid payment amount", httpStatus.BAD_REQUEST);
+  }
 
   const amountInCents = Math.round(totalAmount * 100);
 
-  /**
-   * Create Stripe checkout session first.
-   * Database status changes only after Stripe succeeds.
-   */
+  if (amountInCents <= 0) {
+    throw new AppError("Invalid payment amount", httpStatus.BAD_REQUEST);
+  }
+
+  // ============================================================
+  // CREATE STRIPE CHECKOUT SESSION
+  // ============================================================
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+
     payment_method_types: ["card"],
-    customer_email: rentRequest.tenant.email,
+
+    customer_email: rentalRequest.tenant.email,
+
     line_items: [
       {
         price_data: {
           currency: "usd",
           unit_amount: amountInCents,
+
           product_data: {
-            name: `Rental payment - ${rentRequest.property.title}`,
-            description: rentRequest.property.description.slice(0, 300),
+            name: `Rental payment - ${rentalRequest.property.title}`,
+            description: rentalRequest.property.description.slice(0, 300),
           },
         },
+
         quantity: 1,
       },
     ],
 
     metadata: {
-      rentRequestId: rentRequest.id,
-      tenantId: rentRequest.tenant.id,
-      propertyId: rentRequest.property.id,
-      leaseDays: String(rentRequest.leaseDays),
+      rentRequestId: rentalRequest.id,
+      tenantId: rentalRequest.tenant.id,
+      propertyId: rentalRequest.property.id,
+      leaseDays: String(rentalRequest.leaseDays),
     },
 
-    success_url: `${config.website_url}/dashboard/payment?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${config.website_url}/dashboard/payment?success=false`,
+    // Tenant payment page
+    success_url:
+      `${config.website_url}/dashboard/tenant/payments` +
+      `?status=success` +
+      `&session_id={CHECKOUT_SESSION_ID}`,
+
+    cancel_url:
+      `${config.website_url}/dashboard/tenant/payments` + `?status=cancelled`,
   });
 
-  /**
-   * Mark request as payment pending
-   */
+  // ============================================================
+  // MARK RENTAL REQUEST AS PAYMENT PENDING
+  // ============================================================
+
   await prisma.rentalRequests.update({
     where: {
-      id: rentRequest.id,
+      id: rentalRequest.id,
     },
 
     data: {
@@ -140,7 +208,15 @@ export const paymentCreateIntoDB = async ({
 }: {
   sessionId: string;
 }) => {
+  // ============================================================
+  // RETRIEVE STRIPE CHECKOUT SESSION
+  // ============================================================
+
   const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+  if (session.mode !== "payment") {
+    throw new AppError("Invalid checkout session", httpStatus.BAD_REQUEST);
+  }
 
   if (session.payment_status !== "paid") {
     throw new AppError(
@@ -148,6 +224,10 @@ export const paymentCreateIntoDB = async ({
       httpStatus.BAD_REQUEST,
     );
   }
+
+  // ============================================================
+  // GET TRANSACTION ID
+  // ============================================================
 
   const transactionId =
     typeof session.payment_intent === "string"
@@ -158,6 +238,43 @@ export const paymentCreateIntoDB = async ({
     throw new AppError("Transaction ID not found", httpStatus.BAD_REQUEST);
   }
 
+  // ============================================================
+  // PAYMENT HISTORY SELECT
+  // ============================================================
+
+  const paymentInclude = {
+    property: {
+      select: {
+        id: true,
+        title: true,
+        rent: true,
+        images: true,
+      },
+    },
+
+    tenant: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+      },
+    },
+
+    landlord: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+      },
+    },
+  } as const;
+
+  // ============================================================
+  // IDEMPOTENCY CHECK
+  // ============================================================
+
   const existingPayment = await prisma.payment.findUnique({
     where: {
       transactionId,
@@ -165,8 +282,23 @@ export const paymentCreateIntoDB = async ({
   });
 
   if (existingPayment) {
-    return existingPayment;
+    const paymentHistory = await prisma.payment.findUnique({
+      where: {
+        transactionId,
+      },
+      include: paymentInclude,
+    });
+
+    if (!paymentHistory) {
+      throw new AppError("Payment history not found", httpStatus.NOT_FOUND);
+    }
+
+    return paymentHistory;
   }
+
+  // ============================================================
+  // VALIDATE STRIPE METADATA
+  // ============================================================
 
   const metadata = session.metadata;
 
@@ -174,9 +306,9 @@ export const paymentCreateIntoDB = async ({
     throw new AppError("Payment metadata missing", httpStatus.BAD_REQUEST);
   }
 
-  const { rentRequestId, leaseDays } = metadata;
+  const { rentRequestId, tenantId, propertyId, leaseDays } = metadata;
 
-  if (!rentRequestId || !leaseDays) {
+  if (!rentRequestId || !tenantId || !propertyId || !leaseDays) {
     throw new AppError("Invalid payment metadata", httpStatus.BAD_REQUEST);
   }
 
@@ -186,10 +318,24 @@ export const paymentCreateIntoDB = async ({
     throw new AppError("Invalid lease duration", httpStatus.BAD_REQUEST);
   }
 
-  if (session.amount_total === null || !session.currency) {
+  // ============================================================
+  // VALIDATE STRIPE PAYMENT
+  // ============================================================
+
+  if (
+    session.amount_total === null ||
+    session.amount_total <= 0 ||
+    !session.currency
+  ) {
     throw new AppError("Invalid payment amount", httpStatus.BAD_REQUEST);
   }
+
   const currency = session.currency;
+
+  // ============================================================
+  // FETCH RENTAL REQUEST
+  // ============================================================
+
   const rentalRequest = await prisma.rentalRequests.findUnique({
     where: {
       id: rentRequestId,
@@ -198,12 +344,14 @@ export const paymentCreateIntoDB = async ({
     select: {
       id: true,
       status: true,
+      leaseDays: true,
       propertyId: true,
       tenantId: true,
       landlordId: true,
 
       tenant: {
         select: {
+          id: true,
           name: true,
           email: true,
         },
@@ -211,6 +359,7 @@ export const paymentCreateIntoDB = async ({
 
       landlord: {
         select: {
+          id: true,
           name: true,
           email: true,
         },
@@ -218,7 +367,10 @@ export const paymentCreateIntoDB = async ({
 
       property: {
         select: {
+          id: true,
           title: true,
+          rent: true,
+          securityDeposit: true,
         },
       },
     },
@@ -228,6 +380,35 @@ export const paymentCreateIntoDB = async ({
     throw new AppError("Rental request not found", httpStatus.NOT_FOUND);
   }
 
+  // ============================================================
+  // VERIFY STRIPE METADATA
+  // ============================================================
+
+  if (rentalRequest.tenantId !== tenantId) {
+    throw new AppError(
+      "Payment tenant does not match rental request",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  if (rentalRequest.propertyId !== propertyId) {
+    throw new AppError(
+      "Payment property does not match rental request",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  if (rentalRequest.leaseDays !== leaseDaysNumber) {
+    throw new AppError(
+      "Payment lease duration does not match rental request",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  // ============================================================
+  // VERIFY RENTAL REQUEST
+  // ============================================================
+
   if (rentalRequest.status !== "PAYMENT_PENDING") {
     throw new AppError(
       "Rental request is not ready for payment",
@@ -235,16 +416,87 @@ export const paymentCreateIntoDB = async ({
     );
   }
 
+  if (!rentalRequest.property) {
+    throw new AppError(
+      "Property information not found",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  if (!rentalRequest.tenant || !rentalRequest.landlord) {
+    throw new AppError(
+      "Invalid rental request user data",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  // ============================================================
+  // VERIFY PAYMENT AMOUNT
+  // ============================================================
+
+  const rent = Number(rentalRequest.property.rent);
+  const securityDeposit = Number(rentalRequest.property.securityDeposit);
+
+  if (
+    !Number.isFinite(rent) ||
+    rent < 0 ||
+    !Number.isFinite(securityDeposit) ||
+    securityDeposit < 0
+  ) {
+    throw new AppError(
+      "Invalid property payment amount",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  const expectedAmount = rent * rentalRequest.leaseDays + securityDeposit;
+
+  const expectedAmountInCents = Math.round(expectedAmount * 100);
+
+  if (session.amount_total !== expectedAmountInCents) {
+    throw new AppError(
+      "Payment amount does not match rental request",
+      httpStatus.BAD_REQUEST,
+    );
+  }
+
+  // ============================================================
+  // PREPARE PAYMENT DATA
+  // ============================================================
+
+  const amount = new Prisma.Decimal((session.amount_total / 100).toFixed(2));
+
   const expireIn = new Date();
 
   expireIn.setDate(expireIn.getDate() + leaseDaysNumber);
 
-  const amount = new Prisma.Decimal((session.amount_total / 100).toFixed(2));
+  // ============================================================
+  // CREATE PAYMENT + ACTIVATE RENTAL
+  // ============================================================
 
-  const payment = await prisma.$transaction(async (tx) => {
-    await tx.rentalRequests.update({
+  await prisma.$transaction(async (tx) => {
+    // ----------------------------------------------------------
+    // Prevent duplicate payment processing
+    // ----------------------------------------------------------
+
+    const duplicatePayment = await tx.payment.findUnique({
+      where: {
+        transactionId,
+      },
+    });
+
+    if (duplicatePayment) {
+      return;
+    }
+
+    // ----------------------------------------------------------
+    // Activate rental request
+    // ----------------------------------------------------------
+
+    const rentalUpdate = await tx.rentalRequests.updateMany({
       where: {
         id: rentRequestId,
+        status: "PAYMENT_PENDING",
       },
 
       data: {
@@ -252,16 +504,28 @@ export const paymentCreateIntoDB = async ({
       },
     });
 
-    return await tx.payment.create({
+    if (rentalUpdate.count !== 1) {
+      throw new AppError(
+        "Rental request has already been processed",
+        httpStatus.CONFLICT,
+      );
+    }
+
+    // ----------------------------------------------------------
+    // Create payment
+    // ----------------------------------------------------------
+
+    await tx.payment.create({
       data: {
         amount,
         currency,
+
         propertyId: rentalRequest.propertyId,
         tenantId: rentalRequest.tenantId,
         landlordId: rentalRequest.landlordId,
+
         transactionId,
         provider: "STRIPE",
-
         status: "SUCCESS",
 
         expireIn,
@@ -269,69 +533,110 @@ export const paymentCreateIntoDB = async ({
     });
   });
 
-  // Email notification
-  try {
-    await sendEmail({
-      to: rentalRequest.tenant.email,
-      subject: "Payment Successful",
-      title: "Payment Completed Successfully",
-      description: `
-        <p>Hello ${rentalRequest.tenant.name},</p>
-        <p>
-          Your payment for 
-          <strong>${rentalRequest.property.title}</strong>
-          has been completed successfully.
-        </p>
-        <p>
-          Amount:
-          <strong>${amount.toFixed(2)} ${currency.toUpperCase()}</strong>
-        </p>
-        <p>
-          Lease Duration:
-          <strong>${leaseDaysNumber} days</strong>
-        </p>
-        <p>
-          Transaction ID:
-          <strong>${transactionId}</strong>
-        </p>
-        <p>
-          Thank you for choosing Rent Nest.
-        </p>
-      `,
-    });
+  // ============================================================
+  // FETCH COMPLETE PAYMENT HISTORY
+  // ============================================================
 
-    await sendEmail({
-      to: rentalRequest.landlord.email,
-      subject: "New Rental Payment Received",
-      title: "New Tenant Payment",
-      description: `
-        <p>Hello ${rentalRequest.landlord.name},</p>
-        <p>
-          A tenant has completed payment for your property.
-        </p>
-        <p>
-          Property:
-          <strong>${rentalRequest.property.title}</strong>
-        </p>
-        <p>
-          Tenant:
-          <strong>${rentalRequest.tenant.name}</strong>
-        </p>
-        <p>
-          Amount:
-          <strong>${amount.toFixed(2)} ${currency.toUpperCase()}</strong>
-        </p>
-        <p>
-          Transaction ID:
-          <strong>${transactionId}</strong>
-        </p>
-      `,
-    });
-  } catch (error) {
-    console.error("Payment email failed:", error);
+  const paymentHistory = await prisma.payment.findUnique({
+    where: {
+      transactionId,
+    },
+
+    include: paymentInclude,
+  });
+
+  if (!paymentHistory) {
+    throw new AppError("Payment history not found", httpStatus.NOT_FOUND);
   }
 
-  return payment;
+  // ============================================================
+  // SEND EMAIL NOTIFICATIONS
+  // ============================================================
+
+  try {
+    await Promise.all([
+      sendEmail({
+        to: rentalRequest.tenant.email,
+
+        subject: "Payment Successful",
+
+        title: "Payment Completed Successfully",
+
+        description: `
+          <p>Hello ${rentalRequest.tenant.name},</p>
+
+          <p>
+            Your payment for
+            <strong>${rentalRequest.property.title}</strong>
+            has been completed successfully.
+          </p>
+
+          <p>
+            Amount:
+            <strong>
+              ${amount.toFixed(2)} ${currency.toUpperCase()}
+            </strong>
+          </p>
+
+          <p>
+            Lease Duration:
+            <strong>${leaseDaysNumber} days</strong>
+          </p>
+
+          <p>
+            Transaction ID:
+            <strong>${transactionId}</strong>
+          </p>
+
+          <p>
+            Thank you for choosing Rent Nest.
+          </p>
+        `,
+      }),
+
+      sendEmail({
+        to: rentalRequest.landlord.email,
+
+        subject: "New Rental Payment Received",
+
+        title: "New Tenant Payment",
+
+        description: `
+          <p>Hello ${rentalRequest.landlord.name},</p>
+
+          <p>
+            A tenant has completed payment for your property.
+          </p>
+
+          <p>
+            Property:
+            <strong>${rentalRequest.property.title}</strong>
+          </p>
+
+          <p>
+            Tenant:
+            <strong>${rentalRequest.tenant.name}</strong>
+          </p>
+
+          <p>
+            Amount:
+            <strong>
+              ${amount.toFixed(2)} ${currency.toUpperCase()}
+            </strong>
+          </p>
+
+          <p>
+            Transaction ID:
+            <strong>${transactionId}</strong>
+          </p>
+        `,
+      }),
+    ]);
+  } catch (error) {
+    console.error("Payment email notification failed:", error);
+  }
+
+  return paymentHistory;
 };
 
 export const getAllPaymentHistoryFromDB = async ({
