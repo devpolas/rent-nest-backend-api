@@ -7,7 +7,7 @@ import {
   makePayment,
 } from "./payment.controller";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 // Create Stripe Checkout Session
 router.post(
