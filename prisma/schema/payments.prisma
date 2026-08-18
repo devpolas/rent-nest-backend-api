@@ -12,6 +12,8 @@ model Payment {
 
 
   propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
   tenantId String
   tenant Users @relation(name: "tenant", fields: [tenantId],references: [id],onDelete: Cascade)
 

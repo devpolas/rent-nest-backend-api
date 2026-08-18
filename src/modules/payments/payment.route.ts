@@ -10,12 +10,7 @@ import {
 const router = Router({ mergeParams: true });
 
 // Create Stripe Checkout Session
-router.post(
-  "/",
-  protect,
-  restrictTo("TENANT", "LANDLORD", "ADMIN"),
-  makePayment,
-);
+router.post("/", protect, restrictTo("TENANT"), makePayment);
 
 // Get all payment history
 router.get(

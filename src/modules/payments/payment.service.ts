@@ -701,32 +701,32 @@ export const getPaymentHistoryByIdFromDB = async ({
   const paymentHistory = await prisma.payment.findUnique({
     where: {
       transactionId,
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            rent: true,
-            images: true,
-          },
+    },
+    include: {
+      property: {
+        select: {
+          id: true,
+          title: true,
+          rent: true,
+          images: true,
         },
+      },
 
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
+      tenant: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
         },
+      },
 
-        landlord: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
+      landlord: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
         },
       },
     },
