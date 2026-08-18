@@ -531,6 +531,15 @@ export const paymentCreateIntoDB = async ({
         expireIn,
       },
     });
+
+    await tx.property.update({
+      where: {
+        id: rentalRequest.propertyId,
+      },
+      data: {
+        status: "RENTED",
+      },
+    });
   });
 
   // ============================================================
