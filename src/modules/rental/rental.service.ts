@@ -155,6 +155,8 @@ export const getAllRentRequestsFromDB = async ({
         select: {
           id: true,
           title: true,
+          rent: true,
+          securityDeposit: true,
         },
       },
     },
@@ -207,6 +209,8 @@ export const getRentRequestFromDB = async ({
         select: {
           id: true,
           title: true,
+          rent: true,
+          securityDeposit: true,
         },
       },
     },
