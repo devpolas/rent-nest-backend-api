@@ -92,7 +92,7 @@ export const getPaymentHistoryById = catchAsync(
 );
 
 export const getAllPaymentHistory = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response) => {
     if (!req.user) {
       throw new AppError("Unauthorized", httpStatus.UNAUTHORIZED);
     }
@@ -102,17 +102,27 @@ export const getAllPaymentHistory = catchAsync(
       landlordId?: string;
     } = {};
 
-    if (req.user.role === "TENANT") {
-      filter.tenantId = req.user.id;
+    switch (req.user.role) {
+      case "TENANT":
+        filter.tenantId = req.user.id;
+        break;
+
+      case "LANDLORD":
+        filter.landlordId = req.user.id;
+        break;
+
+      case "ADMIN":
+        // Admin can view all payments.
+        break;
+
+      default:
+        throw new AppError(
+          "You are not authorized to view payments",
+          httpStatus.FORBIDDEN,
+        );
     }
 
-    if (req.user.role === "LANDLORD") {
-      filter.landlordId = req.user.id;
-    }
-
-    const paymentHistory = await getAllPaymentHistoryFromDB({
-      ...filter,
-    });
+    const paymentHistory = await getAllPaymentHistoryFromDB(filter);
 
     sendResponse(res, {
       success: true,

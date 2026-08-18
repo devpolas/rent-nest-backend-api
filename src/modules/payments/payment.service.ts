@@ -648,17 +648,8 @@ export const getAllPaymentHistoryFromDB = async ({
 }) => {
   const paymentHistory = await prisma.payment.findMany({
     where: {
-      ...(tenantId && {
-        tenantId,
-      }),
-
-      ...(landlordId && {
-        landlordId,
-      }),
-    },
-
-    orderBy: {
-      createdAt: "desc",
+      ...(tenantId ? { tenantId } : {}),
+      ...(landlordId ? { landlordId } : {}),
     },
 
     include: {
@@ -688,6 +679,10 @@ export const getAllPaymentHistoryFromDB = async ({
           avatar: true,
         },
       },
+    },
+
+    orderBy: {
+      createdAt: "desc",
     },
   });
 
