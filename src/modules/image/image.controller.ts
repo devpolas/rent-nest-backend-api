@@ -1,23 +1,50 @@
 import type { Request, Response } from "express";
 import httpStatus from "http-status";
 
+import { AppError } from "../../utils/appError";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-import { uploadImage } from "./image.service";
+import { deleteImage, uploadImage } from "./image.service";
 
 export const uploadImagesController = catchAsync(
   async (req: Request, res: Response) => {
-    const files = req.files as Express.Multer.File[];
+    const files = req.files as Express.Multer.File[] | undefined;
 
-    const folder = (req.query.folder as string) || "rent_nest";
-
-    if (!files || files.length === 0) {
-      throw new Error("No images uploaded");
+    if (!files?.length) {
+      throw new AppError("No images uploaded", httpStatus.BAD_REQUEST);
     }
 
-    const uploaded = await Promise.all(
-      files.map((file) => uploadImage(file, folder)),
-    );
+    const folder =
+      typeof req.query.folder === "string" && req.query.folder.trim()
+        ? req.query.folder.trim()
+        : "rent_nest";
+
+    console.log("Uploading images:", {
+      count: files.length,
+      folder,
+    });
+
+    const uploaded = [];
+
+    try {
+      for (const file of files) {
+        const result = await uploadImage(file, folder);
+        uploaded.push(result);
+      }
+    } catch (error) {
+      // Clean up images that were successfully uploaded
+      // before another upload failed.
+      await Promise.allSettled(
+        uploaded.map((image) => deleteImage(image.public_id)),
+      );
+
+      console.error("🔥 CLOUDINARY ERROR:", error);
+
+      throw new AppError(
+        "Failed to upload images",
+        httpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
 
     const images = uploaded.map((image) => ({
       url: image.secure_url,
@@ -28,7 +55,6 @@ export const uploadImagesController = catchAsync(
       success: true,
       statusCode: httpStatus.OK,
       message: "Images uploaded successfully",
-
       data: {
         images,
       },

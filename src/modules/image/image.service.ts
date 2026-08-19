@@ -11,25 +11,24 @@ export const uploadImage = (
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder,
-
         resource_type: "image",
-
-        transformation: [
-          {
-            quality: "auto",
-          },
-          {
-            fetch_format: "auto",
-          },
-        ],
+        transformation: {
+          quality: "auto",
+          fetch_format: "auto",
+        },
       },
-
       (error, result) => {
         if (error) {
-          return reject(error);
+          reject(error);
+          return;
         }
 
-        resolve(result!);
+        if (!result) {
+          reject(new Error("Cloudinary upload returned no result"));
+          return;
+        }
+
+        resolve(result);
       },
     );
 
