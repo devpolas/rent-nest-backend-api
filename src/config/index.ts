@@ -28,4 +28,8 @@ export default {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME as StringValue,
   api_key: process.env.CLOUDINARY_API_KEY as StringValue,
   api_secret: process.env.CLOUDINARY_SECRET as StringValue,
+
+  openai_api_key: process.env.OPENAI_API_KEY,
+  gemini_api_key: process.env.GEMINI_API_KEY,
+  deepseek_api_key: process.env.DEEPSEEK_API_KEY,
 };
