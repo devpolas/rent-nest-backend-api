@@ -28,6 +28,8 @@ export async function streamChatWithFallback({
   if (signal.aborted) return;
 
   try {
+    let streamError: unknown;
+
     const result = streamText({
       model: provider.model,
       system,
@@ -37,6 +39,7 @@ export async function streamChatWithFallback({
       maxRetries: 0,
 
       onError({ error }) {
+        streamError = error;
         console.error(`[AI:${provider.name}] Stream error`, error);
       },
 
@@ -59,6 +62,7 @@ export async function streamChatWithFallback({
 
       if (!outputStarted) {
         outputStarted = true;
+
         res.status(200);
         res.setHeader("Content-Type", "text/plain; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache, no-transform");
@@ -71,8 +75,15 @@ export async function streamChatWithFallback({
 
     if (signal.aborted) return;
 
+    // Surface provider errors instead of masking them as empty streams.
+    if (streamError) {
+      throw streamError;
+    }
+
     if (!outputStarted) {
-      throw new Error("Gemini returned an empty text stream.");
+      throw new Error(
+        "Gemini finished without producing text. Check provider logs.",
+      );
     }
 
     if (!res.writableEnded) {
@@ -87,7 +98,6 @@ export async function streamChatWithFallback({
         message: "Gemini could not generate a response. Please try again.",
       });
     } else if (!res.writableEnded) {
-      // The stream has started, so a JSON error response is no longer safe.
       res.destroy(
         error instanceof Error ? error : new Error("Gemini stream failed."),
       );
