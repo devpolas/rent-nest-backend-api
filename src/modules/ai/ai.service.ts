@@ -8,7 +8,7 @@ function parseBudget(query: string): number | undefined {
   const normalized = query.replace(/,/g, "");
 
   const match = normalized.match(
-    /\b(?:under|below|less than|maximum|max(?:imum)? of)\s*(?:৳|bdt\s*)?(\d+)\b/i,
+    /\b(?:under|below|less than|maximum|max(?:imum)? of)\s*(?:৳\s*|bdt\s*)?(\d+)\b/i,
   );
 
   return match ? Number(match[1]) : undefined;
@@ -110,6 +110,7 @@ export async function searchAvailableProperties(query: string) {
 
       return { property, score };
     })
+    .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 6)
     .map(({ property }) => ({
