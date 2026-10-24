@@ -24,6 +24,7 @@ import { locationRouter } from "./modules/location/location.route";
 import { socialProfileRouter } from "./modules/social-profile/social-profile.route";
 import { propertyImageRouter } from "./modules/property-images/property-image.route";
 import { imageRouter } from "./modules/image/image.routes";
+import { aiRouter } from "./modules/ai/ai.route";
 import { Time } from "./utils/timeHelper";
 
 const app: Application = express();
@@ -228,6 +229,7 @@ app.get("/version", (_req: Request, res: Response) => {
  * =========================================================
  */
 
+app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/profiles", profileRouter);
