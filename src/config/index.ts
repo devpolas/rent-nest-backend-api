@@ -29,7 +29,10 @@ export default {
   api_key: process.env.CLOUDINARY_API_KEY as StringValue,
   api_secret: process.env.CLOUDINARY_SECRET as StringValue,
 
-  openai_api_key: process.env.OPENAI_API_KEY,
   gemini_api_key: process.env.GEMINI_API_KEY,
-  deepseek_api_key: process.env.DEEPSEEK_API_KEY,
+  gemini_model: process.env.GEMINI_MODEL as StringValue,
+  groq_api_key: process.env.GROQ_API_KEY,
+  groq_model: process.env.GROQ_MODEL,
+  open_router_api_key: process.env.OPEN_ROUTER_API_KEY,
+  open_router_model: process.env.OPEN_ROUTER_MODEL as StringValue,
 };
