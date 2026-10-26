@@ -12,6 +12,17 @@ export type ChatProvider = {
 export function getChatModels(): ChatProvider[] {
   const providers: ChatProvider[] = [];
 
+  // 3. OpenRouter (Tertiary fallback provider supporting free model tags like ':free')
+  if (config.open_router_api_key) {
+    const openrouter = createOpenRouter({ apiKey: config.open_router_api_key });
+    providers.push({
+      name: "openrouter",
+      model: openrouter(
+        config.open_router_model || "deepseek/deepseek-r1:free",
+      ),
+    });
+  }
+
   // 1. Groq (Primary testing provider - fast, free tier, no 503 errors)
   if (config.groq_api_key) {
     const groq = createGroq({ apiKey: config.groq_api_key });
@@ -27,17 +38,6 @@ export function getChatModels(): ChatProvider[] {
     providers.push({
       name: "gemini",
       model: google(config.gemini_model || "gemini-3.8-flash"),
-    });
-  }
-
-  // 3. OpenRouter (Tertiary fallback provider supporting free model tags like ':free')
-  if (config.open_router_api_key) {
-    const openrouter = createOpenRouter({ apiKey: config.open_router_api_key });
-    providers.push({
-      name: "openrouter",
-      model: openrouter(
-        config.open_router_model || "deepseek/deepseek-r1:free",
-      ),
     });
   }
 
